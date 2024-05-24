@@ -1,0 +1,178 @@
+.date-actuelle {
+    display: flex;
+    justify-content: center;
+    font-size: 30px;
+}
+
+.container-heure {
+    height: 100%;
+    width: 90%;
+    margin-left: 45px;
+    position: relative;
+}
+
+.heure {
+    border-top: 2px solid;
+    height: 90px;
+    width: 100%;
+}
+
+.liste-heures {
+    margin-top: 0;
+    border-bottom: 2px solid;
+}
+
+.heure-ligne {
+    border-bottom: 2px solid #ff0000;
+    color: #ff0000;
+    height: 2px;
+    position: absolute;
+    text-align: right;
+    width: 85%;
+    transform: translateY(-1px);
+}
+
+.titleCalendar {
+    font-size: 55px;
+    margin-bottom: 30px;
+}
+
+.semaine {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    font-size: 22px;
+}
+
+.jour-mois {
+    font-size: 22px;
+}
+
+.jours-semaine {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.button-week, .button-deconnexion, .button-today, .btn-goToDate, .btn-go-date, .btn-addEvent {
+    --background: linear-gradient(to right, #a163f5, #d7a0de);
+    --background-hover: linear-gradient(to right, #7a3fba, #b679c7);
+    --color: white;
+}
+
+.button-week:hover, .button-deconnexion:hover, .button-today:hover, .btn-goToDate:hover, .btn-go-date:hover, .btn-addEvent:hover {
+    --background: linear-gradient(to right, #7a3fba, #b679c7);
+}
+
+.button-deconnexion {
+    margin-right: 30px;
+}
+
+.button-today {
+    margin-right: 5px;
+}
+
+.btn-goToDate {
+    margin-top: 30px;
+    margin-left: 40px;
+}
+
+.btn-addEvent {
+    margin-bottom: 10px;
+}
+
+.jour-semaine {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.colIconFleche {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logoCalendar {
+    max-width: 4%;
+    height: auto;
+    margin-left: 10px;
+    margin-right: -10px;
+}
+
+.modal-content {
+    flex-direction: column;
+    background: white;
+    padding: 20px 20px 20px;
+}
+
+.btn-go-date, .btn-go-date-close {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.todolist h1{
+    font-size: 40px;
+    border-bottom: 2px solid red;
+    margin-top: -2.5px;
+}
+
+.tasks h1, .notes h1 {
+    border-image: linear-gradient(to right, #a163f5, #d7a0de) 1;
+}
+
+.task {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.priorities, .tasks {
+    display: flex;
+    flex-direction: column;
+}
+
+.notes {
+    width: 300px;
+}
+
+@media (max-width: 600px) {
+    .jour-semaine {
+        font-size: 15px;
+        width: 5px;
+    }
+
+    .jour-mois {
+        font-size: 15px;
+        margin: 0;
+    }
+
+    .heure {
+        width: 95%;
+    }
+
+    .todolist h1 {
+        font-size: 30px;
+    }
+    
+}
+
+@media (max-width: 500px) {
+    .button-today, .button-deconnexion {
+        font-size: 10px;
+    }
+
+    .title-page {
+        font-size: 15px;
+    }
+
+    .heure {
+        width: 90%;
+    }
+
+    .todolist h1 {
+        font-size: 26px;
+    }
+}
