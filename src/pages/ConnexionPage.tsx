@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IonPage, IonContent, IonInput, IonButton, IonImg, IonHeader, IonToolbar, IonTitle } from '@ionic/react';
 import './ConnexionPage.css';
 import { useHistory } from 'react-router-dom';
+import { connexion } from './ConnexionRepository';
 
 const ConnexionPage: React.FC = () => {
   const [login, setLogin] = useState('');
@@ -10,24 +11,9 @@ const ConnexionPage: React.FC = () => {
   const history = useHistory();
 
   const handleButtonClickLogin = async () => {
-    const url = 'https://dayplanner.tech/api/?controller=connexion&action=connect';
     try {
-      const formData = new URLSearchParams();
-      formData.append('login', login);
-      formData.append('password', password);
-  
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formData,
-        credentials: 'include'
-      });
-  
-      const data = await response.json();
+      const data = await connexion(login, password);
       if (data.success === 1) {
-        console.log('Connexion réussie');
         history.push('/Calendrier');
         resetLoginFields();
       } else {
@@ -35,15 +21,14 @@ const ConnexionPage: React.FC = () => {
         setErrorMessage(data.message);
       }
     } catch (error) {
-      console.error('Network error:', error);
-      setErrorMessage('Erreur réseau: Impossible de se connecter à l’API');
+      console.error("Erreur réseau");
     }
-  };  
+  };
 
   const resetLoginFields = () => {
     setLogin('');
     setPassword('');
-  };  
+  };
 
   return (
     <IonPage>

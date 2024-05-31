@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonGrid, IonRow, IonCol, IonIcon, IonImg, IonModal, IonDatetime, IonItem, IonCheckbox, IonLabel,
+  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonGrid, IonRow, IonInput,
+  IonCol, IonIcon, IonImg, IonModal, IonDatetime, IonItem, IonCheckbox, IonLabel, IonTextarea
 } from "@ionic/react";
-import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
+import { caretBackOutline, caretForwardOutline, trash, calendarOutline, add } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import "./CalendrierPage.css";
+import { fetchTasks, updateTask, deleteTask, createTask, delayTask, fetchNotes, createNote, updateNote } from './TodoRepository';
+import { deconnexion } from './ConnexionRepository';
 
 const CalendrierPage: React.FC = () => {
   const history = useHistory();
@@ -12,9 +15,26 @@ const CalendrierPage: React.FC = () => {
   const [pickedDate, setPickedDate] = useState<string>(new Date().toISOString());
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [editedNote, setEditedNote] = useState<any | null>(null);
   const joursSemaine = ["L", "M", "M", "J", "V", "S", "D"];
   const heures = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
   const [weekDates, setWeekDates] = useState<Date[]>([]);
+  const [originalNotes, setOriginalNotes] = useState<any[]>([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [taskText, setTaskText] = useState('');
+  const [isDateChangeModalOpen, setIsDateChangeModalOpen] = useState(false);
+  const [currentTaskId, setCurrentTaskId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 900);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const isSameDay = (d1: Date, d2: Date) =>
     d1.getDate() === d2.getDate() &&
@@ -49,30 +69,21 @@ const CalendrierPage: React.FC = () => {
   }, [selectedDate]);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchAndUpdateTasks = async () => {
       const dateString = selectedDate.toLocaleDateString('en-CA');
-      console.log(`Fetching tasks for date: ${dateString}`);
-      try {
-        const response = await fetch(`https://dayplanner.tech/api/?controller=task&action=index&date=${dateString}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const tasks = await response.json();
-        console.log('Fetched tasks:', tasks);
-        setTasks(Array.isArray(tasks) ? tasks : []);
-      } catch (error) {
-        console.error("Network error", error);
-        setTasks([]);
-      }
+      const fetchedTasks = await fetchTasks(dateString);
+      setTasks(fetchedTasks);
     };
 
-    fetchTasks();
+    const fetchAndUpdateNotes = async () => {
+      const dateString = selectedDate.toLocaleDateString('en-CA');
+      const fetchedNotes = await fetchNotes(dateString);
+      setNotes(fetchedNotes);
+      setOriginalNotes(JSON.parse(JSON.stringify(fetchedNotes)));
+    };
+
+    fetchAndUpdateTasks();
+    fetchAndUpdateNotes();
   }, [selectedDate]);
 
   const handleButtonClickToday = () => {
@@ -80,7 +91,6 @@ const CalendrierPage: React.FC = () => {
   };
 
   const handleDayClick = (day: Date): void => {
-    console.log(`Day clicked: ${day}`);
     const now = new Date();
     const isToday = isSameDay(day, now);
     if (isToday) {
@@ -92,9 +102,7 @@ const CalendrierPage: React.FC = () => {
 
   const handleButtonClickDeconnexion = async () => {
     try {
-      await fetch("https://dayplanner.tech/api/?controller=connexion&action=deconnect", {
-        method: "GET",
-      });
+      await deconnexion();
       history.push("/Connexion");
     } catch (error) {
       console.error("Network error");
@@ -115,6 +123,107 @@ const CalendrierPage: React.FC = () => {
     const newDate = new Date(pickedDate);
     setSelectedDate(newDate);
     setIsModalOpen(false);
+  };
+
+  const handleEditNote = (note: any) => {
+    setEditedNote(note);
+  };
+
+  const handleSaveNote = async (text: string, date: Date) => {
+    const formattedDate = date.toLocaleDateString('en-CA');
+    if (editedNote) {
+      try {
+        await updateNote(text, formattedDate);
+      } catch (error) {
+        console.error("Erreur réseau", error);
+      }
+    } else {
+      try {
+        await createNote(text, formattedDate);
+      } catch (error) {
+        console.error("Erreur réseau", error);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (editedNote) {
+      const originalNote = originalNotes.find(note => note.idNote === editedNote.idNote);
+      if (originalNote) {
+        setNotes(notes.map(note => note.idNote === editedNote.idNote ? originalNote : note));
+      }
+    }
+    setEditedNote(null);
+    setNewNoteText("");
+  };
+
+  const handleTextAreaChange = (e: any, note?: any) => {
+    const value = e.detail.value!;
+    if (note && editedNote && editedNote.idNote === note.idNote) {
+      setEditedNote({ ...editedNote, text: value });
+    } else {
+      setNewNoteText(value);
+    }
+  };
+
+  const handleToggleTaskDone = async (idTask: number, isDone: boolean) => {
+    try {
+      const result = await updateTask(idTask, isDone);
+      if (result.success) {
+        setTasks(tasks.map(task => task.idTask === idTask ? { ...task, done: isDone } : task));
+      }
+    } catch (error) {
+      console.error("Erreur réseau", error);
+    }
+  };
+
+  const handleDeleteTask = async (idTask: number) => {
+    try {
+      const result = await deleteTask(idTask);
+      if (result.success) {
+        setTasks(tasks.filter(task => task.idTask !== idTask));
+      }
+    } catch (error) {
+      console.error("Erreur réseau", error);
+    }
+  };
+
+
+  const handleDateChange = (idTask: number) => {
+    setCurrentTaskId(idTask);
+    setIsDateChangeModalOpen(true);
+  };
+
+  const handleDateChangeModal = async (idTask: number, newDate: Date) => {
+    const formattedDate = newDate.toLocaleDateString('en-CA');
+    try {
+      const result = await delayTask(idTask, formattedDate);
+      if (result.success) {
+        setTasks(tasks.filter(task => task.idTask !== idTask));
+      }
+    } catch (error) {
+      console.error("Erreur réseau", error);
+    }
+    setIsDateChangeModalOpen(false);
+  };
+
+  const handleAddTask = async (title: string, priority: boolean, date: Date) => {
+    const formattedDate = date.toLocaleDateString('en-CA');
+    try {
+      const result = await createTask(title, priority, formattedDate);
+      if (result.newIdTask !== 0) {
+        const newTask = {
+          idTask: result.newIdTask,
+          title: title,
+          done: false,
+          priority: priority,
+          date: formattedDate
+        };
+        setTasks(prevTasks => [...prevTasks, newTask]);
+      }
+    } catch (error) {
+      console.error("Network error", error);
+    }
   };
 
   const currentDate = new Date();
@@ -206,7 +315,7 @@ const CalendrierPage: React.FC = () => {
           </IonTitle>
           <IonGrid>
             <IonRow>
-              <IonCol size="9">
+              <IonCol size={isMobile ? '6' : '8'} className="calendarEvent">
                 <IonButton className="btn-addEvent">Ajouter un évènement</IonButton>
                 {isCurrentDate && (
                   <div className="heure-ligne" style={{ marginTop: `${marginTop}px` }}>
@@ -226,29 +335,89 @@ const CalendrierPage: React.FC = () => {
                 </div>
               </IonCol>
 
-              <IonCol size="3" className="todolist">
+              <IonCol size={isMobile ? '6' : '4'} className="todolist">
                 <IonGrid>
                   <IonRow className="priorities">
                     <h1>Mes priorités</h1>
                     {tasks.filter(task => task.priority !== 0).map((task, index) => (
-                      <IonItem className="task" key={`priority-${task.id || index}`}>
-                        <IonCheckbox slot="start" checked={task.done === 1} />
+                      <IonItem className="task" key={`priority-${task.idTask || index}`}>
+                        <IonCheckbox
+                          justify="start"
+                          checked={task.done}
+                          onIonChange={() => handleToggleTaskDone(task.idTask, !task.done)}
+                        />
                         <IonLabel>{task.title}</IonLabel>
+                        <IonButton className="button-edit-task" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
+                          <IonIcon icon={calendarOutline} />
+                        </IonButton>
+                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDeleteTask(task.idTask)}>
+                          <IonIcon icon={trash} />
+                        </IonButton>
                       </IonItem>
                     ))}
+                    <IonItem className="add-task">
+                      <IonInput placeholder="Ajouter une tâche prioritaire" onIonChange={e => setTaskText(e.detail.value ?? '')}></IonInput>
+                      <IonButton className="button-add-task" onClick={() => handleAddTask(taskText, true, selectedDate)}>
+                        <IonIcon icon={add} />
+                      </IonButton>
+                    </IonItem>
                   </IonRow>
                   <IonRow className="tasks">
                     <h1>Mes tâches à faire</h1>
                     {tasks.filter(task => task.priority === 0).map((task, index) => (
-                      <IonItem className="task" key={`task-${task.id || index}`}>
-                        <IonCheckbox slot="start" checked={task.done === 1} />
+                      <IonItem className="task" key={`task-${task.idTask || index}`}>
+                        <IonCheckbox
+                          className="checkbox-task"
+                          justify="start"
+                          checked={task.done}
+                          onIonChange={() => handleToggleTaskDone(task.idTask, !task.done)}
+                        />
                         <IonLabel>{task.title}</IonLabel>
+                        <IonButton className="button-edit-task" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
+                          <IonIcon icon={calendarOutline} />
+                        </IonButton>
+                        <IonButton className="button-edit-task" fill="clear" slot="end" onClick={() => handleDeleteTask(task.idTask)}>
+                          <IonIcon icon={trash} />
+                        </IonButton>
                       </IonItem>
                     ))}
+                    <IonItem className="add-task">
+                      <IonInput placeholder="Ajouter une tâche" onIonChange={e => setTaskText(e.detail.value ?? '')}></IonInput>
+                      <IonButton className="button-add-task" onClick={() => handleAddTask(taskText, false, selectedDate)}>
+                        <IonIcon icon={add} />
+                      </IonButton>
+                    </IonItem>
                   </IonRow>
                   <IonRow className="notes">
                     <h1>Mes notes</h1>
+                    {notes.length > 0 ? (
+                      notes.map((note, index) => (
+                        <IonItem className="note" key={`note-${note.idNote || index}`}>
+                          <IonTextarea
+                            value={editedNote && editedNote.idNote === note.idNote ? editedNote.text : note.text}
+                            onIonChange={(e) => handleTextAreaChange(e, note)}
+                            autoGrow
+                            readonly={!(editedNote && editedNote.idNote === note.idNote)}
+                            onFocus={() => handleEditNote(note)}
+                          />
+                        </IonItem>
+                      ))
+                    ) : (
+                      <IonItem className="note">
+                        <IonTextarea
+                          value={newNoteText}
+                          onIonChange={(e) => handleTextAreaChange(e)}
+                          placeholder="..."
+                          autoGrow
+                        />
+                      </IonItem>
+                    )}
+                    <IonItem className="note-actions">
+                      <IonButton className="button-save-notes" onClick={() => editedNote ? handleSaveNote(editedNote.text, selectedDate) : handleSaveNote(newNoteText, selectedDate)} disabled={!(editedNote || newNoteText)}>Enregistrer</IonButton>
+                      <IonButton color="medium" onClick={handleCancelEdit} disabled={!(editedNote || newNoteText)}>Annuler</IonButton>
+                    </IonItem>
                   </IonRow>
+
                 </IonGrid>
               </IonCol>
             </IonRow>
@@ -282,6 +451,38 @@ const CalendrierPage: React.FC = () => {
           </IonButton>
         </div>
       </IonModal>
+
+      <IonModal
+        isOpen={isDateChangeModalOpen}
+        onDidDismiss={() => setIsDateChangeModalOpen(false)}
+        className="modal-goToDate"
+      >
+        <div className="modal-content">
+          <IonItem className="modal-item">
+            <IonDatetime
+              className="datePicker-modal-date"
+              presentation="date"
+              value={new Date().toISOString()}
+              onIonChange={(e) => setPickedDate(e.detail.value as string)}
+            />
+          </IonItem>
+          <IonButton className="btn-go-date" onClick={() => {
+            if (currentTaskId !== null) {
+              handleDateChangeModal(currentTaskId, new Date(pickedDate));
+            }
+          }}>
+            Changer la date
+          </IonButton>
+          <IonButton
+            className="btn-go-date-close"
+            color="medium"
+            onClick={() => setIsDateChangeModalOpen(false)}
+          >
+            Fermer
+          </IonButton>
+        </div>
+      </IonModal>
+
     </IonPage>
   );
 };

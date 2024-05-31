@@ -54,14 +54,20 @@
     width: 100%;
 }
 
-.button-week, .button-deconnexion, .button-today, .btn-goToDate, .btn-go-date, .btn-addEvent {
+.button-week, .button-deconnexion, .button-today, .btn-goToDate, .btn-go-date, .btn-addEvent, 
+.btn-save, .btn-cancel, .button-save-notes, .button-add-task {
     --background: linear-gradient(to right, #a163f5, #d7a0de);
     --background-hover: linear-gradient(to right, #7a3fba, #b679c7);
     --color: white;
 }
 
-.button-week:hover, .button-deconnexion:hover, .button-today:hover, .btn-goToDate:hover, .btn-go-date:hover, .btn-addEvent:hover {
+.button-week:hover, .button-deconnexion:hover, .button-today:hover, .btn-goToDate:hover, .btn-go-date:hover, .btn-addEvent:hover, 
+.btn-save:hover, .btn-cancel:hover, .button-save-notes:hover, .button-add-task:hover {
     --background: linear-gradient(to right, #7a3fba, #b679c7);
+}
+
+.button-edit-task {
+    
 }
 
 .button-deconnexion {
@@ -113,7 +119,7 @@
     margin-top: 10px;
 }
 
-.todolist h1{
+.todolist h1 {
     font-size: 40px;
     border-bottom: 2px solid red;
     margin-top: -2.5px;
@@ -129,13 +135,14 @@
     margin-bottom: 10px;
 }
 
-.priorities, .tasks {
+.priorities, .tasks, .notes {
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
-.notes {
-    width: 300px;
+.add-task {
+    margin-bottom: 15px;
 }
 
 @media (max-width: 600px) {
@@ -156,7 +163,6 @@
     .todolist h1 {
         font-size: 30px;
     }
-    
 }
 
 @media (max-width: 500px) {
