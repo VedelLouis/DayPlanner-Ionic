@@ -24,7 +24,6 @@ const CalendrierPage: React.FC = () => {
   const [originalNotes, setOriginalNotes] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [newNoteText, setNewNoteText] = useState("");
-  const [taskText, setTaskText] = useState('');
   const [isDateChangeModalOpen, setIsDateChangeModalOpen] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState<number | null>(null);
   const [events, setEvents] = useState<any[]>([]);
@@ -263,7 +262,7 @@ const CalendrierPage: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonImg slot="start" src="../dayPlannerLogo.png" className="logoCalendar" />
-          <IonTitle className="">Calendrier</IonTitle>
+          <IonTitle>Calendrier</IonTitle>
           <IonButton slot="end" className="button-today" onClick={handleButtonClickToday}>
             Aujourd'hui
           </IonButton>
@@ -294,6 +293,7 @@ const CalendrierPage: React.FC = () => {
                         className="jour-mois"
                         fill="clear"
                         shape="round"
+                        size="small"
                         color={
                           weekDates[index] && isSameDay(weekDates[index], currentDate)
                             ? "danger"
@@ -343,7 +343,7 @@ const CalendrierPage: React.FC = () => {
           </IonTitle>
           <IonGrid>
             <IonRow>
-              <IonCol size={isMobile ? '6' : '8'} className="calendarEvent">
+              <IonCol size={isMobile ? '12' : '6'} className="calendarEvent">
                 <IonButton className="btn-addEvent">Ajouter un évènement</IonButton>
                 {isCurrentDate && (
                   <div className="heure-ligne" style={{ marginTop: `${marginTop}px` }}>
@@ -371,7 +371,7 @@ const CalendrierPage: React.FC = () => {
                 })}
               </IonCol>
 
-              <IonCol size={isMobile ? '6' : '4'} className="todolist">
+              <IonCol size={isMobile ? '12' : '6'} className="todolist">
                 <IonGrid>
                   <IonRow className="priorities">
                     <h1>Mes priorités</h1>

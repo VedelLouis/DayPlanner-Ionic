@@ -54,15 +54,31 @@
     width: 100%;
 }
 
-.button-week, .button-deconnexion, .button-today, .btn-goToDate, .btn-go-date, .btn-addEvent, 
-.btn-save, .btn-cancel, .button-save-notes, .button-add-task {
+.button-week,
+.button-deconnexion,
+.button-today,
+.btn-goToDate,
+.btn-go-date,
+.btn-addEvent,
+.btn-save,
+.btn-cancel,
+.button-save-notes,
+.button-add-task {
     --background: linear-gradient(to right, #a163f5, #d7a0de);
     --background-hover: linear-gradient(to right, #7a3fba, #b679c7);
     --color: white;
 }
 
-.button-week:hover, .button-deconnexion:hover, .button-today:hover, .btn-goToDate:hover, .btn-go-date:hover, .btn-addEvent:hover, 
-.btn-save:hover, .btn-cancel:hover, .button-save-notes:hover, .button-add-task:hover {
+.button-week:hover,
+.button-deconnexion:hover,
+.button-today:hover,
+.btn-goToDate:hover,
+.btn-go-date:hover,
+.btn-addEvent:hover,
+.btn-save:hover,
+.btn-cancel:hover,
+.button-save-notes:hover,
+.button-add-task:hover {
     --background: linear-gradient(to right, #7a3fba, #b679c7);
 }
 
@@ -109,7 +125,8 @@
     padding: 20px 20px 20px;
 }
 
-.btn-go-date, .btn-go-date-close {
+.btn-go-date,
+.btn-go-date-close {
     display: block;
     width: 100%;
     margin-top: 10px;
@@ -121,7 +138,8 @@
     margin-top: -2.5px;
 }
 
-.tasks h1, .notes h1 {
+.tasks h1,
+.notes h1 {
     border-image: linear-gradient(to right, #a163f5, #d7a0de) 1;
 }
 
@@ -131,7 +149,9 @@
     margin-bottom: 10px;
 }
 
-.priorities, .tasks, .notes {
+.priorities,
+.tasks,
+.notes {
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -139,6 +159,37 @@
 
 .add-task {
     margin-bottom: 15px;
+}
+
+.calendarEvent {
+    flex: 2;
+}
+
+.todolist {
+    flex: 1;
+}
+
+.calendar-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .calendar-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .calendarEvent,
+    .todolist {
+        width: 100%;
+        order: 2;
+    }
+
+    .todolist {
+        order: 1;
+    }
 }
 
 @media (max-width: 600px) {
@@ -149,7 +200,6 @@
 
     .jour-mois {
         font-size: 15px;
-        margin: 0;
     }
 
     .heure {
@@ -159,10 +209,23 @@
     .todolist h1 {
         font-size: 30px;
     }
+
+    .titleCalendar {
+        font-size: 46px;
+    }
+
+    .todolist {
+        margin-left: -15px;
+    }
+
+    .calendarEvent {
+        margin-left: -10px;
+    }
 }
 
 @media (max-width: 500px) {
-    .button-today, .button-deconnexion {
+    .button-today,
+    .button-deconnexion {
         font-size: 10px;
     }
 
@@ -176,19 +239,5 @@
 
     .todolist h1 {
         font-size: 26px;
-    }
-}
-
-@media (max-width: 350px) {
-    .title-page {
-        font-size: 12px;
-    }
-    
-    .button-today {
-        font-size: 8px;
-    }
-
-    .button-deconnexion {
-
     }
 }
