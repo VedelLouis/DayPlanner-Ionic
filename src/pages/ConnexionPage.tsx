@@ -22,6 +22,13 @@ const ConnexionPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Erreur réseau");
+      setErrorMessage("Problème de connexion, veuillez réessayer.");
+    }
+  };
+
+  const handleKeyDown = (event: any) => {
+    if (event.key === 'Enter') {
+      handleButtonClickLogin();
     }
   };
 
@@ -43,10 +50,22 @@ const ConnexionPage: React.FC = () => {
             <IonImg src='../dayPlannerLogo.png' className="logoLogin" />
             <h2>Connexion au site</h2>
             <div className="form-group">
-              <IonInput type="text" value={login} onIonChange={e => setLogin(e.detail.value!)} placeholder="Login" required />
+              <IonInput 
+                type="text"
+                value={login}
+                onIonChange={e => setLogin(e.detail.value!)}
+                onKeyDown={handleKeyDown}
+                placeholder="Login" 
+                required />
             </div>
             <div className="form-group">
-              <IonInput type="password" value={password} onIonChange={e => setPassword(e.detail.value!)} placeholder="Mot de passe" required />
+              <IonInput 
+                type="password"
+                value={password}
+                onIonChange={e => setPassword(e.detail.value!)}
+                onKeyDown={handleKeyDown}
+                placeholder="Mot de passe" 
+                required />
             </div>
             <span className='error-message-login'>{errorMessage}</span>
             <IonButton onClick={handleButtonClickLogin} expand="block" className="btn-success">Se connecter</IonButton>

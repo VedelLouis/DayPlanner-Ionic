@@ -7,6 +7,7 @@ import { caretBackOutline, caretForwardOutline, trash, calendarOutline, add } fr
 import { useHistory } from "react-router-dom";
 import "./CalendrierPage.css";
 import { fetchTasks, updateTask, deleteTask, createTask, delayTask, fetchNotes, createNote, updateNote } from './TodoRepository';
+import { fetchEvents } from './EventRepository';
 import { deconnexion } from './ConnexionRepository';
 
 const CalendrierPage: React.FC = () => {
@@ -26,6 +27,9 @@ const CalendrierPage: React.FC = () => {
   const [taskText, setTaskText] = useState('');
   const [isDateChangeModalOpen, setIsDateChangeModalOpen] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState<number | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [priorityTaskText, setPriorityTaskText] = useState('');
+  const [normalTaskText, setNormalTaskText] = useState('');
 
   useEffect(() => {
     const handleResize = () => {
@@ -82,8 +86,15 @@ const CalendrierPage: React.FC = () => {
       setOriginalNotes(JSON.parse(JSON.stringify(fetchedNotes)));
     };
 
+    const fetchAndUpdateEvents = async () => {
+      const dateString = selectedDate.toLocaleDateString('en-CA');
+      const fetchedEvents = await fetchEvents(dateString);
+      setEvents(fetchedEvents);
+    };
+
     fetchAndUpdateTasks();
     fetchAndUpdateNotes();
+    fetchAndUpdateEvents();
   }, [selectedDate]);
 
   const handleButtonClickToday = () => {
@@ -188,7 +199,6 @@ const CalendrierPage: React.FC = () => {
     }
   };
 
-
   const handleDateChange = (idTask: number) => {
     setCurrentTaskId(idTask);
     setIsDateChangeModalOpen(true);
@@ -207,23 +217,41 @@ const CalendrierPage: React.FC = () => {
     setIsDateChangeModalOpen(false);
   };
 
-  const handleAddTask = async (title: string, priority: boolean, date: Date) => {
-    const formattedDate = date.toLocaleDateString('en-CA');
-    try {
-      const result = await createTask(title, priority, formattedDate);
-      if (result.newIdTask !== 0) {
-        const newTask = {
-          idTask: result.newIdTask,
-          title: title,
-          done: false,
-          priority: priority,
-          date: formattedDate
-        };
-        setTasks(prevTasks => [...prevTasks, newTask]);
+  const handleAddTask = async (text: string, priority: boolean) => {
+    if (text.trim() !== '') {
+      const formattedDate = selectedDate.toLocaleDateString('en-CA');
+      try {
+        const result = await createTask(text, priority, formattedDate);
+        if (result.newIdTask !== 0) {
+          const newTask = {
+            idTask: result.newIdTask,
+            title: text,
+            done: false,
+            priority: priority,
+            date: formattedDate
+          };
+          setTasks(prevTasks => [...prevTasks, newTask]);
+          priority ? setPriorityTaskText('') : setNormalTaskText('');
+        }
+      } catch (error) {
+        console.error("Network error", error);
       }
-    } catch (error) {
-      console.error("Network error", error);
     }
+  };
+
+  const calculateEventPosition = (startTime: string, endTime: string): { top: number, height: number } => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    const startHours = start.getHours();
+    const startMinutes = start.getMinutes();
+    const endHours = end.getHours();
+    const endMinutes = end.getMinutes();
+
+    const top = (startHours * 90) + (startMinutes * 1.5);
+    const height = ((endHours - startHours) * 90) + ((endMinutes - startMinutes) * 1.5);
+
+    return { top, height };
   };
 
   const currentDate = new Date();
@@ -235,7 +263,7 @@ const CalendrierPage: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonImg slot="start" src="../dayPlannerLogo.png" className="logoCalendar" />
-          <IonTitle>Calendrier</IonTitle>
+          <IonTitle className="">Calendrier</IonTitle>
           <IonButton slot="end" className="button-today" onClick={handleButtonClickToday}>
             Aujourd'hui
           </IonButton>
@@ -333,13 +361,21 @@ const CalendrierPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                {events.map(event => {
+                  const { top, height } = calculateEventPosition(event.startTime, event.endTime);
+                  return (
+                    <div key={event.idEvent} className="event" style={{ top: `${top}px`, height: `${height}px`, backgroundColor: event.color }}>
+                      {event.name}
+                    </div>
+                  );
+                })}
               </IonCol>
 
               <IonCol size={isMobile ? '6' : '4'} className="todolist">
                 <IonGrid>
                   <IonRow className="priorities">
                     <h1>Mes priorités</h1>
-                    {tasks.filter(task => task.priority !== 0).map((task, index) => (
+                    {tasks.filter(task => task.priority).map((task, index) => (
                       <IonItem className="task" key={`priority-${task.idTask || index}`}>
                         <IonCheckbox
                           justify="start"
@@ -356,15 +392,19 @@ const CalendrierPage: React.FC = () => {
                       </IonItem>
                     ))}
                     <IonItem className="add-task">
-                      <IonInput placeholder="Ajouter une tâche prioritaire" onIonChange={e => setTaskText(e.detail.value ?? '')}></IonInput>
-                      <IonButton className="button-add-task" onClick={() => handleAddTask(taskText, true, selectedDate)}>
+                      <IonInput
+                        placeholder="Ajouter une tâche prioritaire"
+                        value={priorityTaskText}
+                        onIonChange={e => setPriorityTaskText(e.detail.value ?? '')}
+                      />
+                      <IonButton className="button-add-task" onClick={() => handleAddTask(priorityTaskText, true)}>
                         <IonIcon icon={add} />
                       </IonButton>
                     </IonItem>
                   </IonRow>
                   <IonRow className="tasks">
                     <h1>Mes tâches à faire</h1>
-                    {tasks.filter(task => task.priority === 0).map((task, index) => (
+                    {tasks.filter(task => !task.priority).map((task, index) => (
                       <IonItem className="task" key={`task-${task.idTask || index}`}>
                         <IonCheckbox
                           className="checkbox-task"
@@ -382,8 +422,12 @@ const CalendrierPage: React.FC = () => {
                       </IonItem>
                     ))}
                     <IonItem className="add-task">
-                      <IonInput placeholder="Ajouter une tâche" onIonChange={e => setTaskText(e.detail.value ?? '')}></IonInput>
-                      <IonButton className="button-add-task" onClick={() => handleAddTask(taskText, false, selectedDate)}>
+                      <IonInput
+                        placeholder="Ajouter une tâche"
+                        value={normalTaskText}
+                        onIonChange={e => setNormalTaskText(e.detail.value ?? '')}
+                      />
+                      <IonButton className="button-add-task" onClick={() => handleAddTask(normalTaskText, false)}>
                         <IonIcon icon={add} />
                       </IonButton>
                     </IonItem>
