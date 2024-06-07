@@ -4,8 +4,8 @@ export interface Event {
     idEvent?: number;
     name: string;
     color: string;
-    startTime: string;
-    endTime: string;
+    dateStart: string;
+    dateEnd: string;
 }
 
     export const fetchEvents = async (dateString: string): Promise<Event[]> => {

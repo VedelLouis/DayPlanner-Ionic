@@ -175,6 +175,32 @@
     gap: 20px;
 }
 
+.event {
+    position: absolute;
+    width: 100%;
+    color: #fff;
+    border: 2px solid black;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 45px;
+}
+
+.eventName {
+    font-size: 22px;
+    margin: 0;
+    padding: 10px;
+    border: 2px solid black;
+    border-radius: 30px;
+    color: white;
+}
+
+.eventName:hover {
+    border: 2px solid #a163f5;
+    color: #a163f5;
+}
+
 @media (max-width: 900px) {
     .calendar-container {
         display: flex;
@@ -224,6 +250,7 @@
 }
 
 @media (max-width: 500px) {
+
     .button-today,
     .button-deconnexion {
         font-size: 10px;

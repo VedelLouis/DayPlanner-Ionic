@@ -238,24 +238,17 @@ const CalendrierPage: React.FC = () => {
     }
   };
 
-  const calculateEventPosition = (startTime: string, endTime: string): { top: number, height: number } => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-
-    const startHours = start.getHours();
-    const startMinutes = start.getMinutes();
-    const endHours = end.getHours();
-    const endMinutes = end.getMinutes();
-
-    const top = (startHours * 90) + (startMinutes * 1.5);
-    const height = ((endHours - startHours) * 90) + ((endMinutes - startMinutes) * 1.5);
-
-    return { top, height };
-  };
-
   const currentDate = new Date();
   const isCurrentDate = isSameDay(selectedDate, currentDate);
   const marginTop = selectedDate.getHours() * 60 * 1.5 + selectedDate.getMinutes() * 1.5;
+
+  const calculateEventPosition = (startTime: string, endTime: string) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const top = (start.getHours() * 60 + start.getMinutes()) * 1.5;
+    const height = ((end.getHours() * 60 + end.getMinutes()) - (start.getHours() * 60 + start.getMinutes())) * 1.5;
+    return { top, height };
+  };
 
   return (
     <IonPage>
@@ -343,7 +336,7 @@ const CalendrierPage: React.FC = () => {
           </IonTitle>
           <IonGrid>
             <IonRow>
-              <IonCol size={isMobile ? '12' : '6'} className="calendarEvent">
+              <IonCol size={isMobile ? '12' : '8'} className="calendarEvent">
                 <IonButton className="btn-addEvent">Ajouter un évènement</IonButton>
                 {isCurrentDate && (
                   <div className="heure-ligne" style={{ marginTop: `${marginTop}px` }}>
@@ -354,6 +347,24 @@ const CalendrierPage: React.FC = () => {
                     </div>
                   </div>
                 )}
+                {events.map(event => {
+                  const { top, height } = calculateEventPosition(event.dateStart, event.dateEnd);
+                  return (
+                    <div key={event.idEvent} className="event"
+                      style={{
+                        backgroundColor: event.color + '30',
+                        marginTop: top,
+                        height: height
+                      }}>
+                      <button className="eventName"
+                        style={{
+                          backgroundColor: event.color,
+                        }}>
+                        {event.name}
+                      </button>
+                    </div>
+                  );
+                })}
                 <div className="liste-heures">
                   {heures.map((heure) => (
                     <div key={heure} className="heure">
@@ -361,17 +372,9 @@ const CalendrierPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                {events.map(event => {
-                  const { top, height } = calculateEventPosition(event.startTime, event.endTime);
-                  return (
-                    <div key={event.idEvent} className="event" style={{ top: `${top}px`, height: `${height}px`, backgroundColor: event.color }}>
-                      {event.name}
-                    </div>
-                  );
-                })}
               </IonCol>
 
-              <IonCol size={isMobile ? '12' : '6'} className="todolist">
+              <IonCol size={isMobile ? '12' : '4'} className="todolist">
                 <IonGrid>
                   <IonRow className="priorities">
                     <h1>Mes priorités</h1>
@@ -383,7 +386,7 @@ const CalendrierPage: React.FC = () => {
                           onIonChange={() => handleToggleTaskDone(task.idTask, !task.done)}
                         />
                         <IonLabel>{task.title}</IonLabel>
-                        <IonButton className="button-edit-task" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
+                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
                           <IonIcon icon={calendarOutline} />
                         </IonButton>
                         <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDeleteTask(task.idTask)}>
@@ -413,10 +416,10 @@ const CalendrierPage: React.FC = () => {
                           onIonChange={() => handleToggleTaskDone(task.idTask, !task.done)}
                         />
                         <IonLabel>{task.title}</IonLabel>
-                        <IonButton className="button-edit-task" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
+                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
                           <IonIcon icon={calendarOutline} />
                         </IonButton>
-                        <IonButton className="button-edit-task" fill="clear" slot="end" onClick={() => handleDeleteTask(task.idTask)}>
+                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDeleteTask(task.idTask)}>
                           <IonIcon icon={trash} />
                         </IonButton>
                       </IonItem>
@@ -510,7 +513,9 @@ const CalendrierPage: React.FC = () => {
               onIonChange={(e) => setPickedDate(e.detail.value as string)}
             />
           </IonItem>
-          <IonButton className="btn-go-date" onClick={() => {
+          <IonButton 
+          className="btn-go-date" 
+          onClick={() => {
             if (currentTaskId !== null) {
               handleDateChangeModal(currentTaskId, new Date(pickedDate));
             }
