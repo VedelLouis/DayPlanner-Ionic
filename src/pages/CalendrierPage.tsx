@@ -6,9 +6,11 @@ import {
 import { caretBackOutline, caretForwardOutline, trash, calendarOutline, add } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import "./CalendrierPage.css";
-import { fetchTasks, updateTask, deleteTask, createTask, delayTask, fetchNotes, createNote, updateNote } from './TodoRepository';
-import { fetchEvents } from './EventRepository';
-import { deconnexion } from './ConnexionRepository';
+import { fetchTasks, updateTask, deleteTask, createTask, delayTask, fetchNotes, createNote, updateNote } from '../repositories/TodoRepository';
+import { fetchEvents } from '../repositories/EventRepository';
+import { deconnexion } from '../repositories/ConnexionRepository';
+import TodoList from '../components/TodoList';
+import DisplayEvents from '../components/DisplayEvents';
 
 const CalendrierPage: React.FC = () => {
   const history = useHistory();
@@ -242,14 +244,6 @@ const CalendrierPage: React.FC = () => {
   const isCurrentDate = isSameDay(selectedDate, currentDate);
   const marginTop = selectedDate.getHours() * 60 * 1.5 + selectedDate.getMinutes() * 1.5;
 
-  const calculateEventPosition = (startTime: string, endTime: string) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const top = (start.getHours() * 60 + start.getMinutes()) * 1.5;
-    const height = ((end.getHours() * 60 + end.getMinutes()) - (start.getHours() * 60 + start.getMinutes())) * 1.5;
-    return { top, height };
-  };
-
   return (
     <IonPage>
       <IonHeader>
@@ -337,34 +331,11 @@ const CalendrierPage: React.FC = () => {
           <IonGrid>
             <IonRow>
               <IonCol size={isMobile ? '12' : '8'} className="calendarEvent">
-                <IonButton className="btn-addEvent">Ajouter un évènement</IonButton>
-                {isCurrentDate && (
-                  <div className="heure-ligne" style={{ marginTop: `${marginTop}px` }}>
-                    <div className="heure-actuelle">
-                      {selectedDate.getHours().toString().padStart(2, "0") +
-                        ":" +
-                        selectedDate.getMinutes().toString().padStart(2, "0")}
-                    </div>
-                  </div>
-                )}
-                {events.map(event => {
-                  const { top, height } = calculateEventPosition(event.dateStart, event.dateEnd);
-                  return (
-                    <div key={event.idEvent} className="event"
-                      style={{
-                        backgroundColor: event.color + '30',
-                        marginTop: top,
-                        height: height
-                      }}>
-                      <button className="eventName"
-                        style={{
-                          backgroundColor: event.color,
-                        }}>
-                        {event.name}
-                      </button>
-                    </div>
-                  );
-                })}
+                <DisplayEvents
+                  events={events}
+                  isCurrentDate={isCurrentDate}
+                  marginTop={marginTop}
+                />
                 <div className="liste-heures">
                   {heures.map((heure) => (
                     <div key={heure} className="heure">
@@ -374,99 +345,26 @@ const CalendrierPage: React.FC = () => {
                 </div>
               </IonCol>
 
-              <IonCol size={isMobile ? '12' : '4'} className="todolist">
-                <IonGrid>
-                  <IonRow className="priorities">
-                    <h1>Mes priorités</h1>
-                    {tasks.filter(task => task.priority).map((task, index) => (
-                      <IonItem className="task" key={`priority-${task.idTask || index}`}>
-                        <IonCheckbox
-                          justify="start"
-                          checked={task.done}
-                          onIonChange={() => handleToggleTaskDone(task.idTask, !task.done)}
-                        />
-                        <IonLabel>{task.title}</IonLabel>
-                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
-                          <IonIcon icon={calendarOutline} />
-                        </IonButton>
-                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDeleteTask(task.idTask)}>
-                          <IonIcon icon={trash} />
-                        </IonButton>
-                      </IonItem>
-                    ))}
-                    <IonItem className="add-task">
-                      <IonInput
-                        placeholder="Ajouter une tâche prioritaire"
-                        value={priorityTaskText}
-                        onIonChange={e => setPriorityTaskText(e.detail.value ?? '')}
-                      />
-                      <IonButton className="button-add-task" onClick={() => handleAddTask(priorityTaskText, true)}>
-                        <IonIcon icon={add} />
-                      </IonButton>
-                    </IonItem>
-                  </IonRow>
-                  <IonRow className="tasks">
-                    <h1>Mes tâches à faire</h1>
-                    {tasks.filter(task => !task.priority).map((task, index) => (
-                      <IonItem className="task" key={`task-${task.idTask || index}`}>
-                        <IonCheckbox
-                          className="checkbox-task"
-                          justify="start"
-                          checked={task.done}
-                          onIonChange={() => handleToggleTaskDone(task.idTask, !task.done)}
-                        />
-                        <IonLabel>{task.title}</IonLabel>
-                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDateChange(task.idTask)}>
-                          <IonIcon icon={calendarOutline} />
-                        </IonButton>
-                        <IonButton className="button-edit-task" color="medium" fill="clear" slot="end" onClick={() => handleDeleteTask(task.idTask)}>
-                          <IonIcon icon={trash} />
-                        </IonButton>
-                      </IonItem>
-                    ))}
-                    <IonItem className="add-task">
-                      <IonInput
-                        placeholder="Ajouter une tâche"
-                        value={normalTaskText}
-                        onIonChange={e => setNormalTaskText(e.detail.value ?? '')}
-                      />
-                      <IonButton className="button-add-task" onClick={() => handleAddTask(normalTaskText, false)}>
-                        <IonIcon icon={add} />
-                      </IonButton>
-                    </IonItem>
-                  </IonRow>
-                  <IonRow className="notes">
-                    <h1>Mes notes</h1>
-                    {notes.length > 0 ? (
-                      notes.map((note, index) => (
-                        <IonItem className="note" key={`note-${note.idNote || index}`}>
-                          <IonTextarea
-                            value={editedNote && editedNote.idNote === note.idNote ? editedNote.text : note.text}
-                            onIonChange={(e) => handleTextAreaChange(e, note)}
-                            autoGrow
-                            readonly={!(editedNote && editedNote.idNote === note.idNote)}
-                            onFocus={() => handleEditNote(note)}
-                          />
-                        </IonItem>
-                      ))
-                    ) : (
-                      <IonItem className="note">
-                        <IonTextarea
-                          value={newNoteText}
-                          onIonChange={(e) => handleTextAreaChange(e)}
-                          placeholder="..."
-                          autoGrow
-                        />
-                      </IonItem>
-                    )}
-                    <IonItem className="note-actions">
-                      <IonButton className="button-save-notes" onClick={() => editedNote ? handleSaveNote(editedNote.text, selectedDate) : handleSaveNote(newNoteText, selectedDate)} disabled={!(editedNote || newNoteText)}>Enregistrer</IonButton>
-                      <IonButton color="medium" onClick={handleCancelEdit} disabled={!(editedNote || newNoteText)}>Annuler</IonButton>
-                    </IonItem>
-                  </IonRow>
+              <TodoList
+                tasks={tasks}
+                onToggleTaskDone={handleToggleTaskDone}
+                onDeleteTask={handleDeleteTask}
+                onDateChange={handleDateChange}
+                onAddTask={handleAddTask}
+                notes={notes}
+                onTextAreaChange={handleTextAreaChange}
+                editedNote={editedNote}
+                newNoteText={newNoteText}
+                onEditNote={handleEditNote}
+                onSaveNote={handleSaveNote}
+                onCancelEdit={handleCancelEdit}
+                priorityTaskText={priorityTaskText}
+                setPriorityTaskText={setPriorityTaskText}
+                normalTaskText={normalTaskText}
+                setNormalTaskText={setNormalTaskText}
+                isMobile={isMobile}
+              />
 
-                </IonGrid>
-              </IonCol>
             </IonRow>
           </IonGrid>
         </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IonPage, IonContent, IonInput, IonButton, IonImg, IonHeader, IonToolbar, IonTitle } from '@ionic/react';
 import './ConnexionPage.css';
 import { useHistory } from 'react-router-dom';
-import { connexion } from './ConnexionRepository';
+import { connexion } from '../repositories/ConnexionRepository';
 
 const ConnexionPage: React.FC = () => {
   const [login, setLogin] = useState('');
