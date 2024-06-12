@@ -1,270 +1,324 @@
-.date-actuelle {
-    display: flex;
-    justify-content: center;
-    font-size: 30px;
-}
+  .date-actuelle {
+      display: flex;
+      justify-content: center;
+      font-size: 30px;
+  }
 
-.container-heure {
-    height: 100%;
-    width: 90%;
-    margin-left: 45px;
-    position: relative;
-}
+  .container-heure {
+      height: 100%;
+      width: 90%;
+      margin-left: 45px;
+      position: relative;
+  }
 
-.heure {
-    border-top: 2px solid;
-    height: 90px;
-    width: 100%;
-}
+  .heure {
+      border-top: 2px solid;
+      height: 90px;
+      width: 100%;
+  }
 
-.liste-heures {
-    margin-top: 0;
-    border-bottom: 2px solid;
-}
+  .liste-heures {
+      margin-top: 0;
+      border-bottom: 2px solid;
+  }
 
-.heure-ligne {
-    border-bottom: 2px solid #ff0000;
-    color: #ff0000;
-    height: 2px;
-    position: absolute;
-    text-align: right;
-    width: 85%;
-    transform: translateY(-1px);
-}
+  .heure-ligne {
+      border-bottom: 2px solid #ff0000;
+      color: #ff0000;
+      height: 2px;
+      position: absolute;
+      text-align: right;
+      width: 85%;
+      transform: translateY(-1px);
+  }
 
-.titleCalendar {
-    font-size: 55px;
-    margin-bottom: 30px;
-}
+  .titleCalendar {
+      font-size: 55px;
+      margin-bottom: 30px;
+  }
 
-.semaine {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-    font-size: 22px;
-}
+  .semaine {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+      font-size: 22px;
+  }
 
-.jour-mois {
-    font-size: 22px;
-}
+  .jour-mois {
+      font-size: 22px;
+  }
 
-.jours-semaine {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-}
+  .jours-semaine {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+  }
 
-.button-week,
-.button-deconnexion,
-.button-today,
-.btn-goToDate,
-.btn-go-date,
-.btn-addEvent,
-.btn-save,
-.btn-cancel,
-.button-save-notes,
-.button-add-task {
-    --background: linear-gradient(to right, #a163f5, #d7a0de);
-    --background-hover: linear-gradient(to right, #7a3fba, #b679c7);
-    --color: white;
-}
+  .button-week,
+  .button-deconnexion,
+  .button-today,
+  .btn-goToDate,
+  .btn-addEvent,
+  .btn-save,
+  .btn-cancel,
+  .button-save-notes,
+  .button-add-task,
+  .button-settings,
+  .closeModalParam,
+  .button-modal {
+      --background: linear-gradient(to right, #a163f5, #d7a0de);
+      --background-hover: linear-gradient(to right, #7a3fba, #b679c7);
+      --color: white;
+  }
 
-.button-week:hover,
-.button-deconnexion:hover,
-.button-today:hover,
-.btn-goToDate:hover,
-.btn-go-date:hover,
-.btn-addEvent:hover,
-.btn-save:hover,
-.btn-cancel:hover,
-.button-save-notes:hover,
-.button-add-task:hover {
-    --background: linear-gradient(to right, #7a3fba, #b679c7);
-}
+  .button-week:hover,
+  .button-deconnexion:hover,
+  .button-today:hover,
+  .btn-goToDate:hover,
+  .btn-addEvent:hover,
+  .btn-save:hover,
+  .btn-cancel:hover,
+  .button-save-notes:hover,
+  .button-add-task:hover,
+  .button-settings:hover,
+  .closeModalParam:hover,
+  .button-modal:hover {
+      --background: linear-gradient(to right, #7a3fba, #b679c7);
+  }
 
-.button-deconnexion {
-    margin-right: 30px;
-}
+  .button-modal,
+  .button-modal-delete-event {
+      margin-left: 50px;
+      margin-right: 50px;
+  }
 
-.button-today {
-    margin-right: 5px;
-}
+  .button-modal-delete-event {
+      margin-top: 5px;
+  }
 
-.btn-goToDate {
-    margin-top: 30px;
-    margin-left: 40px;
-}
+  .button-settings {
+      margin-right: 5px;
+  }
 
-.btn-addEvent {
-    margin-bottom: 10px;
-}
+  .closeModalParam {
+      margin-right: 10px;
+  }
 
-.jour-semaine {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
+  .button-deconnexion {
+      margin-right: 30px;
+  }
 
-.colIconFleche {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+  .button-today {
+      margin-right: 5px;
+  }
 
-.logoCalendar {
-    max-width: 4%;
-    height: auto;
-    margin-left: 10px;
-    margin-right: -10px;
-}
+  .btn-goToDate {
+      margin-top: 30px;
+      margin-left: 40px;
+  }
 
-.modal-content {
-    flex-direction: column;
-    background: white;
-    padding: 20px 20px 20px;
-}
+  .btn-addEvent {
+      margin-bottom: 10px;
+  }
 
-.btn-go-date,
-.btn-go-date-close {
-    display: block;
-    width: 100%;
-    margin-top: 10px;
-}
+  .jour-semaine {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+  }
 
-.todolist h1 {
-    font-size: 40px;
-    border-bottom: 2px solid red;
-    margin-top: -2.5px;
-}
+  .colIconFleche {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+  }
 
-.tasks h1,
-.notes h1 {
-    border-image: linear-gradient(to right, #a163f5, #d7a0de) 1;
-}
+  .logoCalendar {
+      max-width: 4%;
+      height: auto;
+      margin-left: 10px;
+      margin-right: -10px;
+  }
 
-.task {
-    display: block;
-    width: 100%;
-    margin-bottom: 10px;
-}
+  .btn-go-date,
+  .btn-go-date-close {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+  }
 
-.priorities,
-.tasks,
-.notes {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
+  .todolist h1 {
+      font-size: 40px;
+      border-bottom: 2px solid red;
+      margin-top: -2.5px;
+  }
 
-.add-task {
-    margin-bottom: 15px;
-}
+  .tasks h1,
+  .notes h1 {
+      border-image: linear-gradient(to right, #a163f5, #d7a0de) 1;
+  }
 
-.calendarEvent {
-    flex: 2;
-}
+  .task {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+  }
 
-.todolist {
-    flex: 1;
-}
+  .priorities,
+  .tasks,
+  .notes {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+  }
 
-.calendar-container {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
-}
+  .add-task {
+      margin-bottom: 15px;
+  }
 
-.event {
-    position: absolute;
-    width: 100%;
-    color: #fff;
-    border: 2px solid black;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 45px;
-}
+  .calendarEvent {
+      flex: 2;
+  }
 
-.eventName {
-    font-size: 22px;
-    margin: 0;
-    padding: 10px;
-    border: 2px solid black;
-    border-radius: 30px;
-    color: white;
-}
+  .todolist {
+      flex: 1;
+  }
 
-.eventName:hover {
-    border: 2px solid #a163f5;
-    color: #a163f5;
-}
+  .calendar-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+  }
 
-@media (max-width: 900px) {
-    .calendar-container {
-        display: flex;
-        flex-direction: column;
-    }
+  .event {
+      position: absolute;
+      width: 100%;
+      color: #fff;
+      border: 2px solid black;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 45px;
+  }
 
-    .calendarEvent,
-    .todolist {
-        width: 100%;
-        order: 2;
-    }
+  .eventName {
+      font-size: 22px;
+      margin: 0;
+      padding: 10px;
+      border: 2px solid black;
+      border-radius: 30px;
+      color: white;
+  }
 
-    .todolist {
-        order: 1;
-    }
-}
+  .eventName:hover {
+      border: 2px solid #a163f5;
+      color: #a163f5;
+  }
 
-@media (max-width: 600px) {
-    .jour-semaine {
-        font-size: 15px;
-        width: 5px;
-    }
+  .modal-content ion-item {
+      margin-bottom: 20px;
+  }
 
-    .jour-mois {
-        font-size: 15px;
-    }
+  .modal-content ion-input,
+  .modal-content ion-datetime {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+  }
 
-    .heure {
-        width: 95%;
-    }
+  .modal-content ion-input {
+      --padding-start: 10px !important;
+  }
 
-    .todolist h1 {
-        font-size: 30px;
-    }
+  .color-input {
+      width: 100%;
+      height: 40px;
+      border: none;
+      padding: 0;
+      margin-top: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+  }
 
-    .titleCalendar {
-        font-size: 46px;
-    }
+  .timeStart {
+      position: absolute;
+      right: 5px;
+      top: 0;
+      color: black;
+  }
 
-    .todolist {
-        margin-left: -15px;
-    }
+  .timeEnd {
+      position: absolute;
+      right: 5px;
+      bottom: 0;
+      color: black;
+  }
 
-    .calendarEvent {
-        margin-left: -10px;
-    }
-}
+  @media (max-width: 900px) {
+      .calendar-container {
+          display: flex;
+          flex-direction: column;
+      }
 
-@media (max-width: 500px) {
+      .calendarEvent,
+      .todolist {
+          width: 100%;
+          order: 2;
+      }
 
-    .button-today,
-    .button-deconnexion {
-        font-size: 10px;
-    }
+      .todolist {
+          order: 1;
+      }
+  }
 
-    .title-page {
-        font-size: 15px;
-    }
+  @media (max-width: 600px) {
+      .jour-semaine {
+          font-size: 15px;
+          width: 5px;
+      }
 
-    .heure {
-        width: 90%;
-    }
+      .jour-mois {
+          font-size: 15px;
+      }
 
-    .todolist h1 {
-        font-size: 26px;
-    }
-}
+      .heure {
+          width: 95%;
+      }
+
+      .todolist h1 {
+          font-size: 30px;
+      }
+
+      .titleCalendar {
+          font-size: 46px;
+      }
+
+      .todolist {
+          margin-left: -15px;
+      }
+
+      .calendarEvent {
+          margin-left: -10px;
+      }
+  }
+
+  @media (max-width: 500px) {
+
+      .button-today,
+      .button-deconnexion {
+          font-size: 10px;
+      }
+
+      .title-page {
+          font-size: 15px;
+      }
+
+      .heure {
+          width: 90%;
+      }
+
+      .todolist h1 {
+          font-size: 26px;
+      }
+  }

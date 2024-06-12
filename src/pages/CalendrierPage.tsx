@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import {
-  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonGrid, IonRow, IonInput,
-  IonCol, IonIcon, IonImg, IonModal, IonDatetime, IonItem, IonCheckbox, IonLabel, IonTextarea
+  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonGrid, IonRow,
+  IonCol, IonIcon, IonImg, IonModal, IonDatetime, IonItem, IonToggle, IonRange, IonLabel
 } from "@ionic/react";
-import { caretBackOutline, caretForwardOutline, trash, calendarOutline, add } from "ionicons/icons";
+import { caretBackOutline, caretForwardOutline, settingsOutline, sunnyOutline, moonOutline, closeOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import "./CalendrierPage.css";
 import { fetchTasks, updateTask, deleteTask, createTask, delayTask, fetchNotes, createNote, updateNote } from '../repositories/TodoRepository';
@@ -31,6 +31,8 @@ const CalendrierPage: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [priorityTaskText, setPriorityTaskText] = useState('');
   const [normalTaskText, setNormalTaskText] = useState('');
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -240,6 +242,16 @@ const CalendrierPage: React.FC = () => {
     }
   };
 
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    document.body.classList.toggle('dark', !isDarkMode);
+  };
+
+  const changeFontSize = (size: string) => {
+    document.body.style.fontSize = size;
+  };
+
+
   const currentDate = new Date();
   const isCurrentDate = isSameDay(selectedDate, currentDate);
   const marginTop = selectedDate.getHours() * 60 * 1.5 + selectedDate.getMinutes() * 1.5;
@@ -250,6 +262,9 @@ const CalendrierPage: React.FC = () => {
         <IonToolbar>
           <IonImg slot="start" src="../dayPlannerLogo.png" className="logoCalendar" />
           <IonTitle>Calendrier</IonTitle>
+          <IonButton slot="end" className="button-settings" onClick={() => setIsSettingsModalOpen(true)}>
+            <IonIcon icon={settingsOutline} />
+          </IonButton>
           <IonButton slot="end" className="button-today" onClick={handleButtonClickToday}>
             Aujourd'hui
           </IonButton>
@@ -333,6 +348,7 @@ const CalendrierPage: React.FC = () => {
               <IonCol size={isMobile ? '12' : '8'} className="calendarEvent">
                 <DisplayEvents
                   events={events}
+                  setEvents={setEvents}
                   isCurrentDate={isCurrentDate}
                   marginTop={marginTop}
                 />
@@ -375,7 +391,13 @@ const CalendrierPage: React.FC = () => {
         onDidDismiss={() => setIsModalOpen(false)}
         className="modal-goToDate"
       >
-        <div className="modal-content">
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Aller à une date</IonTitle>
+            <IonButton className="closeModalParam" slot="end" color="medium" onClick={() => setIsModalOpen(false)}><IonIcon icon={closeOutline} /></IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="modal-content">
           <IonItem className="modal-item">
             <IonDatetime
               className="datePicker-modal-date"
@@ -384,17 +406,10 @@ const CalendrierPage: React.FC = () => {
               onIonChange={(e) => setPickedDate(e.detail.value as string)}
             />
           </IonItem>
-          <IonButton className="btn-go-date" onClick={handleConfirmDate}>
+          <IonButton className="button-modal" expand="block" onClick={handleConfirmDate}>
             Aller à cette date
           </IonButton>
-          <IonButton
-            className="btn-go-date-close"
-            color="medium"
-            onClick={() => setIsModalOpen(false)}
-          >
-            Fermer
-          </IonButton>
-        </div>
+        </IonContent>
       </IonModal>
 
       <IonModal
@@ -402,7 +417,13 @@ const CalendrierPage: React.FC = () => {
         onDidDismiss={() => setIsDateChangeModalOpen(false)}
         className="modal-goToDate"
       >
-        <div className="modal-content">
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Changer la date</IonTitle>
+            <IonButton className="closeModalParam" slot="end" color="medium" onClick={() => setIsDateChangeModalOpen(false)}><IonIcon icon={closeOutline} /></IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="modal-content">
           <IonItem className="modal-item">
             <IonDatetime
               className="datePicker-modal-date"
@@ -411,23 +432,49 @@ const CalendrierPage: React.FC = () => {
               onIonChange={(e) => setPickedDate(e.detail.value as string)}
             />
           </IonItem>
-          <IonButton 
-          className="btn-go-date" 
-          onClick={() => {
-            if (currentTaskId !== null) {
-              handleDateChangeModal(currentTaskId, new Date(pickedDate));
-            }
-          }}>
+          <IonButton
+            className="button-modal" expand="block"
+            onClick={() => {
+              if (currentTaskId !== null) {
+                handleDateChangeModal(currentTaskId, new Date(pickedDate));
+              }
+            }}>
             Changer la date
           </IonButton>
-          <IonButton
-            className="btn-go-date-close"
-            color="medium"
-            onClick={() => setIsDateChangeModalOpen(false)}
-          >
-            Fermer
-          </IonButton>
-        </div>
+        </IonContent>
+      </IonModal>
+
+      <IonModal isOpen={isSettingsModalOpen} onDidDismiss={() => setIsSettingsModalOpen(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Paramètres</IonTitle>
+            <IonButton className="closeModalParam" slot="end" color="medium" onClick={() => setIsSettingsModalOpen(false)}>
+              <IonIcon icon={closeOutline} />
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <IonItem>
+            <IonLabel >Thème</IonLabel>
+            <IonIcon icon={isDarkMode ? moonOutline : sunnyOutline} />
+            <IonToggle
+              checked={isDarkMode}
+              onIonChange={() => toggleTheme()}
+            />
+          </IonItem>
+          <IonItem>
+            <IonLabel>Taille de la police</IonLabel>
+            <IonButton color="medium" style={{ fontSize: '16px' }} fill="clear" onClick={() => changeFontSize('16px')}>
+              A
+            </IonButton>
+            <IonButton color="medium" style={{ fontSize: '20px' }} fill="clear" onClick={() => changeFontSize('20px')}>
+              A
+            </IonButton>
+            <IonButton color="medium" style={{ fontSize: '26px' }} fill="clear" onClick={() => changeFontSize('26px')}>
+              A
+            </IonButton>
+          </IonItem>
+        </IonContent>
       </IonModal>
 
     </IonPage>
