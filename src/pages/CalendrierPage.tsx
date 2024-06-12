@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
-  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonGrid, IonRow,
-  IonCol, IonIcon, IonImg, IonModal, IonDatetime, IonItem, IonToggle, IonRange, IonLabel
+  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonGrid, IonRow, IonList,
+  IonCol, IonIcon, IonImg, IonModal, IonDatetime, IonItem, IonToggle, IonLabel
 } from "@ionic/react";
 import { caretBackOutline, caretForwardOutline, settingsOutline, sunnyOutline, moonOutline, closeOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
@@ -11,6 +11,7 @@ import { fetchEvents } from '../repositories/EventRepository';
 import { deconnexion } from '../repositories/ConnexionRepository';
 import TodoList from '../components/TodoList';
 import DisplayEvents from '../components/DisplayEvents';
+
 
 const CalendrierPage: React.FC = () => {
   const history = useHistory();
@@ -244,7 +245,7 @@ const CalendrierPage: React.FC = () => {
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
-    document.body.classList.toggle('dark', !isDarkMode);
+    document.body.classList.toggle('dark');
   };
 
   const changeFontSize = (size: string) => {
@@ -454,14 +455,19 @@ const CalendrierPage: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <IonItem>
-            <IonLabel >Thème</IonLabel>
-            <IonIcon icon={isDarkMode ? moonOutline : sunnyOutline} />
-            <IonToggle
-              checked={isDarkMode}
-              onIonChange={() => toggleTheme()}
-            />
-          </IonItem>
+          <IonList>
+            <IonItem>
+              <IonIcon icon={isDarkMode ? moonOutline : sunnyOutline} />
+              <IonLabel style={{ marginLeft: '10px' }}>Thème</IonLabel>
+              <IonToggle
+                className="toggle-dark-mode"
+                justify="end"
+                name="darkMode"
+                checked={isDarkMode}
+                onIonChange={toggleTheme}
+              />
+            </IonItem>
+          </IonList>
           <IonItem>
             <IonLabel>Taille de la police</IonLabel>
             <IonButton color="medium" style={{ fontSize: '16px' }} fill="clear" onClick={() => changeFontSize('16px')}>
