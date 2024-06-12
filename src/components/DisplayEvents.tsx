@@ -186,6 +186,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     );
 
     if (result.success) {
+      closeAddModal();
       const newEvent = {
         idEvent: result.idEvent,
         name: addEventName,
@@ -195,8 +196,6 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       };
 
       setEvents(prevEvents => [...prevEvents, newEvent]);
-
-      closeAddModal();
     } else {
       console.error("Erreur");
     }
