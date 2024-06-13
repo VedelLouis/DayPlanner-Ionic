@@ -39,56 +39,67 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
   const currentTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const [addEventStartTime, setAddEventStartTime] = useState(currentTime);
   const [addEventEndTime, setAddEventEndTime] = useState(currentTime);
-  const [addEventColor, setAddEventColor] = useState('#ffffff');
+  const [addEventColor, setAddEventColor] = useState('#000');
 
   useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!draggingEvent) return;
-      setCurrentY(event.clientY);
-      setIsDragging(true);
-    };
-
-    const handleMouseUp = async () => {
-      if (!draggingEvent) return;
-
-      if (isDragging) {
-        const deltaY = currentY - initialY;
-        const minutesMoved = Math.round(deltaY / 1.5);
-
-        const updatedEvents = await Promise.all(events.map(async (e) => {
-          if (e.idEvent === draggingEvent.idEvent) {
-            const newStart = new Date(e.dateStart);
-            newStart.setMinutes(newStart.getMinutes() + minutesMoved);
-            const newEnd = new Date(e.dateEnd);
-            newEnd.setMinutes(newEnd.getMinutes() + minutesMoved);
-
-            if (newStart.getHours() >= 0 && newEnd.getHours() <= 24) {
-              const result = await updateEventTime(draggingEvent.idEvent, formatDateTime(newStart), formatDateTime(newEnd));
-              if (result.success) {
-                return { ...e, dateStart: formatDateTime(newStart), dateEnd: formatDateTime(newEnd) };
-              }
-            }
-          }
-          return e;
-        }));
-
-        setEvents(updatedEvents);
+    const handleMouseMove = (event: any) => {
+      if (!draggingEvent || !isDragging) return;
+  
+      const newY = event.clientY;
+      const deltaY = newY - initialY;
+      const minutesMoved = Math.round(deltaY / 1.5);
+  
+      // Calculez les nouveaux temps potentiels
+      const potentialNewStart = new Date(draggingEvent.dateStart);
+      const potentialNewEnd = new Date(draggingEvent.dateEnd);
+      potentialNewStart.setMinutes(potentialNewStart.getMinutes() + minutesMoved);
+      potentialNewEnd.setMinutes(potentialNewEnd.getMinutes() + minutesMoved);
+  
+      // Vérifiez les limites de temps et bloquez le déplacement visuel si nécessaire
+      if (potentialNewStart.getHours() >= 0 && potentialNewEnd.getHours() < 24 && potentialNewStart.getDate() === potentialNewEnd.getDate()) {
+        setCurrentY(newY);
+        setIsDragging(true);
+      } else {
+        // Bloquez le déplacement en ne changeant pas currentY
+        setIsDragging(false);
       }
-
+    };
+  
+    const handleMouseUp = async () => {
+      if (!draggingEvent || !isDragging) return;
+  
+      const startMinutes = new Date(draggingEvent.dateStart).getMinutes();
+      const endMinutes = new Date(draggingEvent.dateEnd).getMinutes();
+      const deltaY = currentY - initialY;
+      const minutesMoved = Math.round(deltaY / 1.5);
+  
+      const newStart = new Date(draggingEvent.dateStart);
+      const newEnd = new Date(draggingEvent.dateEnd);
+      newStart.setMinutes(startMinutes + minutesMoved);
+      newEnd.setMinutes(endMinutes + minutesMoved);
+  
+      // Assurez-vous que les nouvelles heures restent dans la même journée
+      if (newStart.getHours() >= 0 && newEnd.getHours() < 24 && newStart.getDate() === newEnd.getDate()) {
+        const result = await updateEventTime(draggingEvent.idEvent, formatDateTime(newStart), formatDateTime(newEnd));
+        if (result.success) {
+          setEvents(events.map(e => e.idEvent === draggingEvent.idEvent ? { ...e, dateStart: formatDateTime(newStart), dateEnd: formatDateTime(newEnd) } : e));
+        }
+      }
+  
       setDraggingEvent(null);
       setIsDragging(false);
       setInitialY(0);
       setCurrentY(0);
     };
-
+  
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-
+  
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [currentY, draggingEvent, events, initialY, setEvents, isDragging]);
+  }, [currentY, draggingEvent, events, initialY, isDragging, setEvents]);  
 
   const calculateEventPosition = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
@@ -207,6 +218,10 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     setCurrentY(e.clientY);
   };
 
+  const isWithinDayLimits = (newStart: Date, newEnd: Date) => {
+    return newStart.getHours() >= 0 && newEnd.getHours() <= 24;
+  };
+
   const formatDateTime = (date: Date) => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -272,8 +287,8 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
           {selectedEvent && (
             <>
               <IonItem>
-                <IonLabel position="fixed">Nom de l'évènement</IonLabel>
-                <IonInput value={eventName} onIonChange={(e) => setEventName(e.detail.value as string)} />
+                <IonLabel position="fixed" >Nom de l'évènement</IonLabel>
+                <IonInput required value={eventName} onIonChange={(e) => setEventName(e.detail.value as string)} />
               </IonItem>
               <IonItem>
                 <IonLabel position="fixed">Date de l'évènement</IonLabel>
@@ -313,7 +328,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
           <>
             <IonItem>
               <IonLabel position="fixed">Nom de l'évènement</IonLabel>
-              <IonInput placeholder="..." value={addEventName} onIonChange={(e) => setAddEventName(e.detail.value as string)} />
+              <IonInput required placeholder="..." value={addEventName} onIonChange={(e) => setAddEventName(e.detail.value as string)} />
             </IonItem>
             <IonItem>
               <IonLabel position="fixed">Date de l'évènement</IonLabel>
