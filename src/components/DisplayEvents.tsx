@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { IonButton, IonModal, IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonLabel, IonDatetime, IonItem, IonFooter, IonIcon } from '@ionic/react';
+import { IonButton, IonModal, IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonLabel, IonDatetime, IonItem, IonFooter, IonIcon, IonToast } from '@ionic/react';
 import { closeOutline } from "ionicons/icons";
-import { deleteEvent, updateEvent, updateEventTime, createEvent } from '../repositories/EventRepository';
+import { deleteEvent, updateEvent, updateEventTime, createEvent, eventSameTime } from '../repositories/EventRepository';
 
 interface Event {
   idEvent: number;
@@ -31,6 +31,8 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
   const [initialY, setInitialY] = useState<number>(0);
   const [currentY, setCurrentY] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [resizingEvent, setResizingEvent] = useState<Event | null>(null);
+  const [resizingType, setResizingType] = useState<string | null>(null);
   const [addEventName, setAddEventName] = useState('');
   const [addEventDate, setAddEventDate] = useState<string>(() => {
     const today = new Date();
@@ -39,67 +41,128 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
   const currentTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const [addEventStartTime, setAddEventStartTime] = useState(currentTime);
   const [addEventEndTime, setAddEventEndTime] = useState(currentTime);
-  const [addEventColor, setAddEventColor] = useState('#000');
+  const [addEventColor, setAddEventColor] = useState('#000000');
+  const [showToast, setShowToast] = useState({ show: false, message: '' });
+  const [isResizing, setIsResizing] = useState<boolean>(false);
 
   useEffect(() => {
-    const handleMouseMove = (event: any) => {
-      if (!draggingEvent || !isDragging) return;
-  
-      const newY = event.clientY;
-      const deltaY = newY - initialY;
-      const minutesMoved = Math.round(deltaY / 1.5);
-  
-      // Calculez les nouveaux temps potentiels
-      const potentialNewStart = new Date(draggingEvent.dateStart);
-      const potentialNewEnd = new Date(draggingEvent.dateEnd);
-      potentialNewStart.setMinutes(potentialNewStart.getMinutes() + minutesMoved);
-      potentialNewEnd.setMinutes(potentialNewEnd.getMinutes() + minutesMoved);
-  
-      // Vérifiez les limites de temps et bloquez le déplacement visuel si nécessaire
-      if (potentialNewStart.getHours() >= 0 && potentialNewEnd.getHours() < 24 && potentialNewStart.getDate() === potentialNewEnd.getDate()) {
-        setCurrentY(newY);
-        setIsDragging(true);
-      } else {
-        // Bloquez le déplacement en ne changeant pas currentY
-        setIsDragging(false);
-      }
-    };
-  
-    const handleMouseUp = async () => {
-      if (!draggingEvent || !isDragging) return;
-  
-      const startMinutes = new Date(draggingEvent.dateStart).getMinutes();
-      const endMinutes = new Date(draggingEvent.dateEnd).getMinutes();
-      const deltaY = currentY - initialY;
-      const minutesMoved = Math.round(deltaY / 1.5);
-  
-      const newStart = new Date(draggingEvent.dateStart);
-      const newEnd = new Date(draggingEvent.dateEnd);
-      newStart.setMinutes(startMinutes + minutesMoved);
-      newEnd.setMinutes(endMinutes + minutesMoved);
-  
-      // Assurez-vous que les nouvelles heures restent dans la même journée
-      if (newStart.getHours() >= 0 && newEnd.getHours() < 24 && newStart.getDate() === newEnd.getDate()) {
-        const result = await updateEventTime(draggingEvent.idEvent, formatDateTime(newStart), formatDateTime(newEnd));
-        if (result.success) {
-          setEvents(events.map(e => e.idEvent === draggingEvent.idEvent ? { ...e, dateStart: formatDateTime(newStart), dateEnd: formatDateTime(newEnd) } : e));
+    const handleMove = (event: MouseEvent | TouchEvent) => {
+      if (isDragging && draggingEvent) {
+        const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+        const newY = clientY;
+        const deltaY = newY - initialY;
+        const minutesMoved = Math.round(deltaY / 1.5);
+
+        const potentialNewStart = new Date(draggingEvent.dateStart);
+        const potentialNewEnd = new Date(draggingEvent.dateEnd);
+        potentialNewStart.setMinutes(potentialNewStart.getMinutes() + minutesMoved);
+        potentialNewEnd.setMinutes(potentialNewEnd.getMinutes() + minutesMoved);
+
+        if (potentialNewStart.getDate() === potentialNewEnd.getDate()) {
+          setCurrentY(newY);
+          setIsDragging(true);
+        } else {
+          setIsDragging(false);
         }
       }
-  
-      setDraggingEvent(null);
-      setIsDragging(false);
-      setInitialY(0);
-      setCurrentY(0);
+
+      if (isResizing && resizingEvent) {
+        const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+        const deltaY = clientY - initialY;
+        const minutesMoved = Math.round(deltaY / 1.5);
+
+        const newStart = new Date(resizingEvent.dateStart);
+        const newEnd = new Date(resizingEvent.dateEnd);
+
+        if (resizingType === 'top') {
+          newStart.setMinutes(newStart.getMinutes() + minutesMoved);
+          if (newStart < newEnd) {
+            setCurrentY(clientY);
+          }
+        } else if (resizingType === 'bottom') {
+          newEnd.setMinutes(newEnd.getMinutes() + minutesMoved);
+          if (newEnd > newStart) {
+            setCurrentY(clientY);
+          }
+        }
+      }
     };
-  
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  
+
+    const handleEnd = async () => {
+      if (isDragging && draggingEvent) {
+        const startMinutes = new Date(draggingEvent.dateStart).getMinutes();
+        const endMinutes = new Date(draggingEvent.dateEnd).getMinutes();
+        const deltaY = currentY - initialY;
+        const minutesMoved = Math.round(deltaY / 1.5);
+
+        const newStart = new Date(draggingEvent.dateStart);
+        const newEnd = new Date(draggingEvent.dateEnd);
+        newStart.setMinutes(startMinutes + minutesMoved);
+        newEnd.setMinutes(endMinutes + minutesMoved);
+
+        if (newStart.getDate() === newEnd.getDate()) {
+          const sameTimeResult = await eventSameTime(formatDateTime(newStart), formatDateTime(newEnd), draggingEvent.idEvent);
+          if (sameTimeResult.success > 0) {
+            setShowToast({ show: true, message: 'Il y a déjà un événement prévu pour cette période' });
+          } else {
+            const result = await updateEventTime(draggingEvent.idEvent, formatDateTime(newStart), formatDateTime(newEnd));
+            if (result.success) {
+              setEvents(events.map(e => e.idEvent === draggingEvent.idEvent ? { ...e, dateStart: formatDateTime(newStart), dateEnd: formatDateTime(newEnd) } : e));
+            }
+          }
+        }
+
+        setDraggingEvent(null);
+        setIsDragging(false);
+        setInitialY(0);
+        setCurrentY(0);
+      }
+
+      if (isResizing && resizingEvent) {
+        const newStart = new Date(resizingEvent.dateStart);
+        const newEnd = new Date(resizingEvent.dateEnd);
+
+        const deltaY = currentY - initialY;
+        const minutesMoved = Math.round(deltaY / 1.5);
+
+        if (resizingType === 'top') {
+          newStart.setMinutes(newStart.getMinutes() + minutesMoved);
+        } else if (resizingType === 'bottom') {
+          newEnd.setMinutes(newEnd.getMinutes() + minutesMoved);
+        }
+
+        if (newStart < newEnd) {
+          const sameTimeResult = await eventSameTime(formatDateTime(newStart), formatDateTime(newEnd), resizingEvent.idEvent);
+          if (sameTimeResult.success > 0) {
+            setShowToast({ show: true, message: 'Il y a déjà un événement prévu pour cette période' });
+          } else {
+            const result = await updateEventTime(resizingEvent.idEvent, formatDateTime(newStart), formatDateTime(newEnd));
+            if (result.success) {
+              setEvents(events.map(e => e.idEvent === resizingEvent.idEvent ? { ...e, dateStart: formatDateTime(newStart), dateEnd: formatDateTime(newEnd) } : e));
+            }
+          }
+        }
+
+        setResizingEvent(null);
+        setResizingType(null);
+        setInitialY(0);
+        setCurrentY(0);
+        setIsResizing(false);
+      }
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('touchend', handleEnd);
+
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
     };
-  }, [currentY, draggingEvent, events, initialY, isDragging, setEvents]);  
+  }, [currentY, draggingEvent, events, initialY, isDragging, resizingEvent, resizingType, isResizing, setEvents]);
 
   const calculateEventPosition = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
@@ -150,6 +213,22 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       const newDateStart = `${eventDate} ${eventStartTime}`;
       const newDateEnd = `${eventDate} ${eventEndTime}`;
 
+      if (!eventName || !eventDate || !eventStartTime || !eventEndTime || !eventColor) {
+        setShowToast({ show: true, message: 'Tous les champs doivent être remplis' });
+        return;
+      }
+
+      if (new Date(newDateEnd).getTime() - new Date(newDateStart).getTime() < 30 * 60 * 1000) {
+        setShowToast({ show: true, message: 'Les événements doivent durer au moins 30 minutes' });
+        return;
+      }
+
+      const sameTimeResult = await eventSameTime(newDateStart, newDateEnd, selectedEvent.idEvent);
+      if (sameTimeResult.success > 0) {
+        setShowToast({ show: true, message: 'Il y a déjà un événement prévu pour cette période' });
+        return;
+      }
+
       const result = await updateEvent(
         selectedEvent.idEvent,
         eventName,
@@ -158,7 +237,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
         newDateEnd
       );
 
-      if (result.success) {
+      if (result.success === 1) {
         const updatedEvents = events.map(event => {
           if (event.idEvent === selectedEvent.idEvent) {
             return {
@@ -189,6 +268,22 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     const addDateStart = `${addEventDate} ${addEventStartTime}`;
     const addDateEnd = `${addEventDate} ${addEventEndTime}`;
 
+    if (!addEventName || !addEventDate || !addEventStartTime || !addEventEndTime || !addEventColor) {
+      setShowToast({ show: true, message: 'Tous les champs doivent être remplis' });
+      return;
+    }
+
+    if (new Date(addDateEnd).getTime() - new Date(addDateStart).getTime() < 30 * 60 * 1000) {
+      setShowToast({ show: true, message: 'Les événements doivent durer au moins 30 minutes' });
+      return;
+    }
+
+    const sameTimeResult = await eventSameTime(addDateStart, addDateEnd);
+    if (sameTimeResult.success > 0) {
+      setShowToast({ show: true, message: 'Il y a déjà un événement prévu pour cette période' });
+      return;
+    }
+
     const result = await createEvent(
       addEventName,
       addEventColor,
@@ -207,10 +302,16 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       };
 
       setEvents(prevEvents => [...prevEvents, newEvent]);
+
+      setAddEventName('');
+      setAddEventDate(new Date().toISOString().split('T')[0]);
+      setAddEventStartTime(currentTime);
+      setAddEventEndTime(currentTime);
+      setAddEventColor('#000000');
     } else {
       console.error("Erreur");
     }
-  }
+  };
 
   const onMouseDown = (e: React.MouseEvent<HTMLDivElement>, initialEvent: Event) => {
     setDraggingEvent(initialEvent);
@@ -218,8 +319,28 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     setCurrentY(e.clientY);
   };
 
-  const isWithinDayLimits = (newStart: Date, newEnd: Date) => {
-    return newStart.getHours() >= 0 && newEnd.getHours() <= 24;
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>, initialEvent: Event) => {
+    setDraggingEvent(initialEvent);
+    setInitialY(e.touches[0].clientY);
+    setCurrentY(e.touches[0].clientY);
+  };
+
+  const onResizerMouseDown = (e: React.MouseEvent<HTMLDivElement>, initialEvent: Event, type: 'top' | 'bottom') => {
+    e.stopPropagation();
+    setResizingEvent(initialEvent);
+    setResizingType(type);
+    setInitialY(e.clientY);
+    setCurrentY(e.clientY);
+    setIsResizing(true);
+  };
+
+  const onResizerTouchStart = (e: React.TouchEvent<HTMLDivElement>, initialEvent: Event, type: 'top' | 'bottom') => {
+    e.stopPropagation();
+    setResizingEvent(initialEvent);
+    setResizingType(type);
+    setInitialY(e.touches[0].clientY);
+    setCurrentY(e.touches[0].clientY);
+    setIsResizing(true);
   };
 
   const formatDateTime = (date: Date) => {
@@ -244,19 +365,27 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       {events.map(event => {
         const { top, height } = calculateEventPosition(event.dateStart, event.dateEnd);
         const isDraggingEvent = draggingEvent && draggingEvent.idEvent === event.idEvent;
+        const isResizingEvent = resizingEvent && resizingEvent.idEvent === event.idEvent;
         const offset = isDraggingEvent ? currentY - initialY : 0;
+        const resizeOffset = isResizingEvent ? currentY - initialY : 0;
 
         return (
           <div key={event.idEvent} className="event"
             onMouseDown={(e) => onMouseDown(e, event)}
+            onTouchStart={(e) => onTouchStart(e, event)}
             onMouseMove={() => setIsDragging(true)}
+            onTouchMove={() => setIsDragging(true)}
             style={{
               backgroundColor: event.color + '30',
-              marginTop: isDraggingEvent ? top + offset : top,
-              height: height,
+              marginTop: isDraggingEvent ? top + offset : isResizingEvent && resizingType === 'top' ? top + resizeOffset : top,
+              height: isResizingEvent && resizingType === 'top' ? height - resizeOffset : isResizingEvent && resizingType === 'bottom' ? height + resizeOffset : height,
               cursor: 'move',
             }}
           >
+            <div className="resizerTop"
+              onMouseDown={(e) => onResizerMouseDown(e, event, 'top')}
+              onTouchStart={(e) => onResizerTouchStart(e, event, 'top')}
+            ></div>
             <div className="timeStart">{event.dateStart.split(' ')[1]}</div>
             <button className="eventName"
               style={{
@@ -270,6 +399,10 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
               {event.name}
             </button>
             <div className="timeEnd">{event.dateEnd.split(' ')[1]}</div>
+            <div className="resizerBottom"
+              onMouseDown={(e) => onResizerMouseDown(e, event, 'bottom')}
+              onTouchStart={(e) => onResizerTouchStart(e, event, 'bottom')}
+            ></div>
           </div>
         );
       })}
@@ -353,6 +486,12 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
         </IonFooter>
       </IonModal>
 
+      <IonToast
+        isOpen={showToast.show}
+        message={showToast.message}
+        duration={2000}
+        onDidDismiss={() => setShowToast({ show: false, message: '' })}
+      />
     </>
   );
 };

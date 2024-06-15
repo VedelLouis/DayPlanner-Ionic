@@ -20,6 +20,7 @@
   .liste-heures {
       margin-top: 0;
       border-bottom: 2px solid;
+      user-select: none;
   }
 
   .heure-ligne {
@@ -65,7 +66,9 @@
   .button-add-task,
   .button-settings,
   .closeModalParam,
-  .button-modal {
+  .button-modal,
+  .button-modal-move,
+  .button-modal-moveTime {
       --background: linear-gradient(to right, #a163f5, #d7a0de);
       --background-hover: linear-gradient(to right, #7a3fba, #b679c7);
       --color: white;
@@ -82,7 +85,9 @@
   .button-add-task:hover,
   .button-settings:hover,
   .closeModalParam:hover,
-  .button-modal:hover {
+  .button-modal:hover,
+  .button-modal-move:hover,
+  .button-modal-moveTime:hover{
       --background: linear-gradient(to right, #7a3fba, #b679c7);
   }
 
@@ -119,6 +124,19 @@
 
   .btn-addEvent {
       margin-bottom: 10px;
+  }
+
+  .button-modal-move {
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 15px;
+  }
+
+  .button-modal-moveTime {
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
 
   .jour-semaine {
@@ -201,6 +219,7 @@
       justify-content: center;
       align-items: center;
       min-height: 45px;
+      user-select: none;
   }
 
   .eventName {
@@ -215,6 +234,30 @@
   .eventName:hover {
       border: 2px solid #a163f5;
       color: #a163f5;
+  }
+
+  .resizerBottom {
+      position: absolute;
+      bottom: -10px;
+      left: 49%;
+      width: 20px;
+      height: 20px;
+      background-color: white;
+      border: 5px solid #b679c7;
+      border-radius: 30px;
+      cursor: s-resize;
+  }
+
+  .resizerTop {
+      position: absolute;
+      top: -10px;
+      left: 49%;
+      width: 20px;
+      height: 20px;
+      background-color: white;
+      border: 5px solid #b679c7;
+      border-radius: 30px;
+      cursor: s-resize;
   }
 
   .modal-content ion-item {
@@ -298,6 +341,10 @@
           margin-left: -15px;
       }
 
+      .event {
+          margin-left: -15px;
+      }
+
       .calendarEvent {
           margin-left: -10px;
       }
@@ -310,10 +357,6 @@
           font-size: 10px;
       }
 
-      .title-page {
-          font-size: 15px;
-      }
-
       .heure {
           width: 90%;
       }
@@ -321,4 +364,16 @@
       .todolist h1 {
           font-size: 26px;
       }
+  }
+
+  @media (max-width: 410px) {
+
+      .title-homepage {
+          font-size: medium;
+      }
+
+      .logoCalendar {
+          display: none;
+      }
+
   }

@@ -262,7 +262,7 @@ const CalendrierPage: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonImg slot="start" src="../dayPlannerLogo.png" className="logoCalendar" />
-          <IonTitle>Calendrier</IonTitle>
+          <IonTitle className="title-homepage">Calendrier</IonTitle>
           <IonButton slot="end" className="button-settings" onClick={() => setIsSettingsModalOpen(true)}>
             <IonIcon icon={settingsOutline} />
           </IonButton>
