@@ -9,6 +9,8 @@ interface Task {
   priority: boolean;
 }
 
+// Composant qui gère l'affichage des tâches et des notes, la todo list
+
 interface TodoListProps {
   tasks: Task[];
   onToggleTaskDone: (idTask: number, isDone: boolean) => void;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IonButton, IonModal, IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonLabel, IonDatetime, IonItem, IonFooter, IonIcon, IonToast } from '@ionic/react';
 import { closeOutline } from "ionicons/icons";
-import { deleteEvent, updateEvent, updateEventTime, createEvent, eventSameTime } from '../repositories/EventRepository';
+import { deleteEvent, updateEvent, updateEventTime, createEvent, eventSameTime, choiceMoveEvent } from '../repositories/EventRepository';
 
 interface Event {
   idEvent: number;
@@ -18,9 +18,12 @@ interface DisplayEventsProps {
   marginTop: number;
 }
 
+// Composant qui affiche et gère les évènements
+
 const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurrentDate, marginTop }) => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [eventName, setEventName] = useState<string>('');
   const [eventDate, setEventDate] = useState<string>('');
@@ -44,8 +47,16 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
   const [addEventColor, setAddEventColor] = useState('#000000');
   const [showToast, setShowToast] = useState({ show: false, message: '' });
   const [isResizing, setIsResizing] = useState<boolean>(false);
+  const [draggingIdEvent, setDraggingIdEvent] = useState<number | null>(null);
+  const [formattedOriginalStart, setFormattedOriginalStart] = useState('');
+  const [formattedOriginalEnd, setFormattedOriginalEnd] = useState('');
+  const [moveEventName, setMoveEventName] = useState('');
+  const [moveEventColor, setMoveEventColor] = useState('#000000');
 
   useEffect(() => {
+
+    // Fonction qui gère le déplacement et le redimensionnement des évènements, quand on clique ou appuie sur un évènement
+
     const handleMove = (event: MouseEvent | TouchEvent) => {
       if (isDragging && draggingEvent) {
         const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
@@ -88,10 +99,18 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       }
     };
 
+    // Fonction qui gère la fin du déplacement et du redimensionnement des évènements, 
+    // quand on relache la souris ou le doigt
+
     const handleEnd = async () => {
+      const minimumMovement = 1;
+
       if (isDragging && draggingEvent) {
-        const startMinutes = new Date(draggingEvent.dateStart).getMinutes();
-        const endMinutes = new Date(draggingEvent.dateEnd).getMinutes();
+        const originalStart = new Date(draggingEvent.dateStart);
+        const originalEnd = new Date(draggingEvent.dateEnd);
+
+        const startMinutes = originalStart.getMinutes();
+        const endMinutes = originalEnd.getMinutes();
         const deltaY = currentY - initialY;
         const minutesMoved = Math.round(deltaY / 1.5);
 
@@ -100,14 +119,21 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
         newStart.setMinutes(startMinutes + minutesMoved);
         newEnd.setMinutes(endMinutes + minutesMoved);
 
-        if (newStart.getDate() === newEnd.getDate()) {
-          const sameTimeResult = await eventSameTime(formatDateTime(newStart), formatDateTime(newEnd), draggingEvent.idEvent);
-          if (sameTimeResult.success > 0) {
-            setShowToast({ show: true, message: 'Il y a déjà un événement prévu pour cette période' });
-          } else {
-            const result = await updateEventTime(draggingEvent.idEvent, formatDateTime(newStart), formatDateTime(newEnd));
-            if (result.success) {
-              setEvents(events.map(e => e.idEvent === draggingEvent.idEvent ? { ...e, dateStart: formatDateTime(newStart), dateEnd: formatDateTime(newEnd) } : e));
+        if (Math.abs(deltaY) > minimumMovement) {
+          setDraggingIdEvent(draggingEvent.idEvent);
+          setFormattedOriginalStart(formatDateTime(originalStart));
+          setFormattedOriginalEnd(formatDateTime(originalEnd));
+
+          if (newStart.getDate() === newEnd.getDate()) {
+            const sameTimeResult = await eventSameTime(formatDateTime(newStart), formatDateTime(newEnd), draggingEvent.idEvent);
+            if (sameTimeResult.success > 0) {
+              setShowToast({ show: true, message: 'Il y a déjà un événement prévu pour cette période' });
+            } else {
+              setIsMoveModalOpen(true);
+              const result = await updateEventTime(draggingEvent.idEvent, formatDateTime(newStart), formatDateTime(newEnd));
+              if (result.success) {
+                setEvents(events.map(e => e.idEvent === draggingEvent.idEvent ? { ...e, dateStart: formatDateTime(newStart), dateEnd: formatDateTime(newEnd) } : e));
+              }
             }
           }
         }
@@ -164,6 +190,10 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     };
   }, [currentY, draggingEvent, events, initialY, isDragging, resizingEvent, resizingType, isResizing, setEvents]);
 
+  // Fonction qui calcule la position d'un évènement en fonction du marge du haut et de la hauteur de l'évènement,
+  // qui donnera donc son heure de début et de fin
+  // Permet d'afficher les évènements sur la grille
+
   const calculateEventPosition = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
     const end = new Date(endTime);
@@ -171,6 +201,8 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     const height = ((end.getHours() * 60 + end.getMinutes()) - (start.getHours() * 60 + start.getMinutes())) * 1.5;
     return { top, height };
   };
+
+  // Ouverture et fermeture des modals
 
   const openModal = (event: Event) => {
     setSelectedEvent(event);
@@ -185,6 +217,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
 
   const closeModal = () => {
     setSelectedEvent(null);
+    resetUpdateModal();
     setIsModalOpen(false);
   };
 
@@ -194,8 +227,16 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
   };
 
   const closeAddModal = () => {
+    resetAddModal();
     setIsAddModalOpen(false);
   };
+
+  const closeMoveModal = () => {
+    resetMoveModal();
+    setIsMoveModalOpen(false);
+  };
+
+  // Fonction qui gère la suppression d'un évènement
 
   const handleDeleteEvent = async () => {
     if (selectedEvent && selectedEvent.idEvent) {
@@ -208,11 +249,14 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     }
   };
 
+  // Fonction qui gère la mise à jour d'un évènement
+
   const handleUpdateEvent = async () => {
+
     if (selectedEvent && selectedEvent.idEvent) {
       const newDateStart = `${eventDate} ${eventStartTime}`;
       const newDateEnd = `${eventDate} ${eventEndTime}`;
-
+      console.log(newDateStart, newDateEnd);
       if (!eventName || !eventDate || !eventStartTime || !eventEndTime || !eventColor) {
         setShowToast({ show: true, message: 'Tous les champs doivent être remplis' });
         return;
@@ -238,6 +282,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       );
 
       if (result.success === 1) {
+        resetUpdateModal();
         const updatedEvents = events.map(event => {
           if (event.idEvent === selectedEvent.idEvent) {
             return {
@@ -263,6 +308,8 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       }
     }
   };
+
+  // Fonction qui gère la création d'un évènement
 
   const handleCreateEvent = async () => {
     const addDateStart = `${addEventDate} ${addEventStartTime}`;
@@ -291,8 +338,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       addDateEnd
     );
 
-    if (result.success) {
-      closeAddModal();
+    if (result.success && result.idEvent) {
       const newEvent = {
         idEvent: result.idEvent,
         name: addEventName,
@@ -308,8 +354,53 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
       setAddEventStartTime(currentTime);
       setAddEventEndTime(currentTime);
       setAddEventColor('#000000');
+      closeAddModal();
     } else {
       console.error("Erreur");
+    }
+  };
+
+  // Fonction qui gère le choix de l'utilisateur après le déplacement d'un évènement,
+  // soit laisser la place vide, soit remonter tous les autres évènements chronologiquement, soit créer un nouvel évènement
+
+  const handleChoiceMoveEvent = async (
+    choice: number, idEvent: number, originalStart: string, originalEnd: string, name: string, color: string
+  ) => {
+    try {
+      if (!moveEventName && choice === 2) {
+        setShowToast({ show: true, message: 'Tous les champs doivent être remplis' });
+        return;
+      }
+      const sameTimeResult = await eventSameTime(originalStart, originalEnd);
+      if (sameTimeResult.success > 0) {
+        setShowToast({ show: true, message: 'Il y a déjà un événement prévu pour cette période' });
+        return;
+      }
+      const result = await choiceMoveEvent(
+        choice,
+        idEvent,
+        originalStart,
+        originalEnd,
+        name,
+        color
+      );
+      if (choice === 2 && result.success && result.idEvent) {
+        const newEvent = {
+          idEvent: result.idEvent,
+          name,
+          color,
+          dateStart: originalStart,
+          dateEnd: originalEnd
+        };
+
+        setEvents(prevEvents => [...prevEvents, newEvent]);
+      } else {
+        window.location.reload();
+      }
+
+      closeMoveModal();
+    } catch (error) {
+      console.error('Erreur');
     }
   };
 
@@ -343,6 +434,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     setIsResizing(true);
   };
 
+  // Fonction qui donne la date formatée
   const formatDateTime = (date: Date) => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -350,6 +442,33 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };
+
+  // Reinitalisation des modals après utilisation
+
+  const resetUpdateModal = () => {
+    setSelectedEvent(null);
+    setEventName('');
+    setEventDate('');
+    setEventStartTime('');
+    setEventEndTime('');
+    setEventColor('');
+    setIsModalOpen(false);
+  };
+
+  const resetAddModal = () => {
+    setAddEventName('');
+    setAddEventDate(new Date().toISOString().split('T')[0]);
+    setAddEventStartTime(currentTime);
+    setAddEventEndTime(currentTime);
+    setAddEventColor('#000000');
+    setIsAddModalOpen(false);
+  };
+
+  const resetMoveModal = () => {
+    setMoveEventName('');
+    setMoveEventColor('#000000');
+    setIsMoveModalOpen(false);
   };
 
   return (
@@ -447,7 +566,7 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
           <IonButton className="button-modal-delete-event" expand="block" color="danger" onClick={handleDeleteEvent}>Supprimer</IonButton>
         </IonFooter>
       </IonModal>
-
+    
       <IonModal isOpen={isAddModalOpen} onDidDismiss={closeAddModal}>
         <IonHeader>
           <IonToolbar>
@@ -484,6 +603,33 @@ const DisplayEvents: React.FC<DisplayEventsProps> = ({ events, setEvents, isCurr
         <IonFooter>
           <IonButton className="button-modal" expand="block" onClick={handleCreateEvent}>Ajouter</IonButton>
         </IonFooter>
+      </IonModal>
+
+      <IonModal isOpen={isMoveModalOpen} onDidDismiss={closeMoveModal}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Déplacer l'évènement</IonTitle>
+            <IonButton className="closeModalParam" slot="end" color="medium" onClick={closeMoveModal}>
+              <IonIcon icon={closeOutline} />
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="modal-content">
+          <>
+            <IonButton className="button-modal-move" expand="block" onClick={closeMoveModal}>Laisser l'emplacement vide</IonButton>
+            <IonItem>
+              <IonLabel position="fixed">Nom de l'évènement</IonLabel>
+              <IonInput required placeholder="..." value={moveEventName} onIonChange={(e) => setMoveEventName(e.detail.value as string)} />
+            </IonItem>
+            <IonItem>
+              <IonLabel position="fixed">Couleur de l'évènement</IonLabel>
+              <input type="color" className="color-input" value={moveEventColor} onChange={(e) => setMoveEventColor(e.target.value)} />
+            </IonItem>
+            <IonButton className="button-modal-moveTime" expand="block" onClick={() =>
+              handleChoiceMoveEvent(2, draggingIdEvent ?? 0, formattedOriginalStart, formattedOriginalEnd, moveEventName, moveEventColor)}>
+              Créer un évènement sur l'emplacement vide</IonButton>
+          </>
+        </IonContent>
       </IonModal>
 
       <IonToast

@@ -1,3 +1,5 @@
+// Repository contenant les requêtes relatives à la connexion
+
 export const connexion = async (login: string, password: string): Promise<any> => {
   const url = 'https://dayplanner.tech/api/?controller=connexion&action=connect';
   try {

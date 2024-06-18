@@ -8,6 +8,9 @@ export interface Event {
     dateEnd: string;
 }
 
+// Repository contenant les requêtes relatives aux événements
+
+
 export const fetchEvents = async (dateString: string): Promise<Event[]> => {
     try {
         const response = await fetch(`${API_URL}?controller=event&action=index&date=${dateString}`, {
@@ -136,7 +139,7 @@ export const createEvent = async (name: string, color: string, dateStart: string
         }
 
         const text = await response.text();
-        const result = text ? JSON.parse(text) : { success: 1 };
+        const result = text ? JSON.parse(text) : { success: 1, idEvent: 0 };
 
         return result;
     } catch (error) {
@@ -177,19 +180,15 @@ export const eventSameTime = async (dateStart: string, dateEnd: string, idEvent?
 export const choiceMoveEvent = async (
     choice: number,
     idEvent: number,
-    newDateStart: string,
-    newDateEnd: string,
     oldDateStart: string,
     oldDateEnd: string,
     name?: string,
     color?: string
-): Promise<{ success: number }> => {
+): Promise<{ success: number, idEvent?: number }> => {
     try {
         const formData = new URLSearchParams();
         formData.append('choice', choice.toString());
         formData.append('idEvent', idEvent.toString());
-        formData.append('newDateStart', newDateStart);
-        formData.append('newDateEnd', newDateEnd);
         formData.append('oldDateStart', oldDateStart);
         formData.append('oldDateEnd', oldDateEnd);
         if (name) {
@@ -198,6 +197,7 @@ export const choiceMoveEvent = async (
         if (color) {
             formData.append('color', color);
         }
+
         const response = await fetch(`${API_URL}?controller=event&action=choiceMove`, {
             method: 'POST',
             headers: {
@@ -212,7 +212,11 @@ export const choiceMoveEvent = async (
         }
 
         const text = await response.text();
-        const result = text ? JSON.parse(text) : { success: 1 };
+        const result = text ? JSON.parse(text) : { success: 0 };
+
+        if (choice === 2 && result.success && result.idEvent) {
+            return { success: 1, idEvent: result.idEvent };
+        }
 
         return result;
     } catch (error) {

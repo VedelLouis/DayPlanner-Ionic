@@ -35,6 +35,7 @@ const CalendrierPage: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // Fonction pour détecter si l'écran est en mode mobile pour gérer le responsive sur mobile
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 900);
@@ -76,6 +77,8 @@ const CalendrierPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [selectedDate]);
 
+  // Fetch des tâches, notes et événements à chaque changement de date
+
   useEffect(() => {
     const fetchAndUpdateTasks = async () => {
       const dateString = selectedDate.toLocaleDateString('en-CA');
@@ -105,6 +108,8 @@ const CalendrierPage: React.FC = () => {
     setSelectedDate(new Date());
   };
 
+  // Fonction pour changer la date sélectionnée
+
   const handleDayClick = (day: Date): void => {
     const now = new Date();
     const isToday = isSameDay(day, now);
@@ -123,6 +128,8 @@ const CalendrierPage: React.FC = () => {
       console.error("Network error");
     }
   };
+
+  // Fonctions pour changer de jour
 
   const handlePrevDay = () => {
     const newDate = new Date(selectedDate.getTime() - 24 * 60 * 60 * 1000);
@@ -144,6 +151,8 @@ const CalendrierPage: React.FC = () => {
     setEditedNote(note);
   };
 
+  // Fonction pour sauvegarder une note, si la note existe déjà, on la met à jour, sinon on la crée
+
   const handleSaveNote = async (text: string, date: Date) => {
     const formattedDate = date.toLocaleDateString('en-CA');
     if (editedNote) {
@@ -160,6 +169,8 @@ const CalendrierPage: React.FC = () => {
       }
     }
   };
+
+  // Fonction pour annuler l'édition d'une note
 
   const handleCancelEdit = () => {
     if (editedNote) {
@@ -180,6 +191,8 @@ const CalendrierPage: React.FC = () => {
       setNewNoteText(value);
     }
   };
+
+  // Fonctions pour marquer la tâche comme faite, la supprimer et changer la date
 
   const handleToggleTaskDone = async (idTask: number, isDone: boolean) => {
     try {
@@ -242,6 +255,8 @@ const CalendrierPage: React.FC = () => {
       }
     }
   };
+
+  // Fonction pour changer le thème et la taille de la police
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);

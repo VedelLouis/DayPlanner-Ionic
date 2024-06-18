@@ -12,6 +12,8 @@ interface Note {
   text: string;
 }
 
+// Repository contenant les requêtes relatives aux tâches
+
 export const fetchNotes = async (dateString: string): Promise<Note[]> => {
   try {
     const response = await fetch(`${API_URL}?controller=note&action=index&date=${dateString}`, {
