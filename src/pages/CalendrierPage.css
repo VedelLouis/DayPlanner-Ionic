@@ -64,6 +64,7 @@
   .btn-cancel,
   .button-save-notes,
   .button-add-task,
+  .button-add-prio,
   .button-settings,
   .closeModalParam,
   .button-modal,
@@ -83,11 +84,12 @@
   .btn-cancel:hover,
   .button-save-notes:hover,
   .button-add-task:hover,
+  .button-add-prio:hover,
   .button-settings:hover,
   .closeModalParam:hover,
   .button-modal:hover,
   .button-modal-move:hover,
-  .button-modal-moveTime:hover{
+  .button-modal-moveTime:hover {
       --background: linear-gradient(to right, #7a3fba, #b679c7);
   }
 
@@ -127,17 +129,17 @@
   }
 
   .button-modal-move {
-    margin-left: 50px;
-    margin-right: 50px;
-    margin-top: 15px;
-    margin-bottom: 15px;
+      margin-left: 50px;
+      margin-right: 50px;
+      margin-top: 15px;
+      margin-bottom: 15px;
   }
 
   .button-modal-moveTime {
-    margin-left: 50px;
-    margin-right: 50px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+      margin-left: 50px;
+      margin-right: 50px;
+      margin-top: 10px;
+      margin-bottom: 10px;
   }
 
   .jour-semaine {

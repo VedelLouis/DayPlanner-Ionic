@@ -50,7 +50,8 @@ const ConnexionPage: React.FC = () => {
             <IonImg src='../dayPlannerLogo.png' className="logoLogin" />
             <h2>Connexion au site</h2>
             <div className="form-group">
-              <IonInput 
+              <IonInput
+                className="login-input" 
                 type="text"
                 value={login}
                 onIonChange={e => setLogin(e.detail.value!)}
@@ -60,6 +61,7 @@ const ConnexionPage: React.FC = () => {
             </div>
             <div className="form-group">
               <IonInput 
+                className='password-input'
                 type="password"
                 value={password}
                 onIonChange={e => setPassword(e.detail.value!)}

@@ -91,7 +91,7 @@ const TodoList: React.FC<TodoListProps> = ({
               value={priorityTaskText}
               onIonChange={e => setPriorityTaskText(e.detail.value ?? '')}
             />
-            <IonButton className="button-add-task" onClick={() => handleAddTask(priorityTaskText, true)}>
+            <IonButton className="button-add-prio" onClick={() => handleAddTask(priorityTaskText, true)}>
               <IonIcon icon={add} />
             </IonButton>
           </IonItem>
